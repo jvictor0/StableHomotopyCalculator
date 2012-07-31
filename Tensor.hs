@@ -4,6 +4,9 @@ module Tensor where
 import BiFunctor
 import Module
 import Utils
+import LinearAlgebra
+import qualified Data.Map as Map
+
 
 data Tensor a b = Tensor a b deriving (Eq,Ord)
 
@@ -50,4 +53,6 @@ induceStructure v = sum $ map (\(m,a) -> tensor a (toFModule m)) $ toAList v
 reduceStructure  :: (Eq r, Ord m, Multiplicative m', Num r)
                     => FreeModule (Tensor m' m) r -> FreeModule m (FreeModule m' r)
 reduceStructure v = vmap (\(Tensor r m,k) -> (m,k*>(toFModule r))) v
+
+induceLinear mp v = induceStructure $ linearMap (Map.map reduceStructure mp) $ reduceStructure v
 

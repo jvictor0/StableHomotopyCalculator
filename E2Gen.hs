@@ -24,12 +24,15 @@ grating (E2Gen x _ _) = x
 instance Show E2Gen where
   show (E2Gen s t_s primes) = (letters!!s) ++ "_" ++ (texShow $ s + t_s) ++ (take primes $ repeat '\'')
 
-gen ss = E2Gen s ((read nm)-s) $ length $ takeWhile (=='\'') $ reverse ss
-  where (name,num) = break (=='_') ss
-        s =  (fromJust $ elemIndex name letters)
-        nm = takeWhile isDigit  $ if num!!1 == '{' then drop 2 num else drop 1 num
+instance UnShow E2Gen where
+  unShow ss = E2Gen s ((read nm)-s) $ length $ takeWhile (=='\'') $ reverse ss
+    where (name,num) = break (=='_') ss
+          s =  (fromJust $ elemIndex name letters)
+          nm = takeWhile isDigit  $ if num!!1 == '{' then drop 2 num else drop 1 num
 
+instance Multiplicative E2Gen where
+  unit = E2Gen 0 0 0
 
 type FreeSteenrodModule = FreeModule E2Gen SteenrodAlgebra
-type Mod2FreeSteenrodVS = FreeModule (Tensor SteenrodAlgebra E2Gen) ZMod2
+type Z2FreeSteenrodVS = FreeModule (Tensor SteenrodSquare E2Gen) ZMod2
 

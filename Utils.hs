@@ -32,6 +32,9 @@ texShow s = if length ss > 1 then "{" ++ ss ++ "}" else ss
 fact :: Int -> Integer
 fact n = product [1..fromIntegral n]
 
+choose 0 k = 0
+choose n k
+  | k > n || n < 0 || k < 0  = error $ "choose "  ++ (show n) ++ " " ++ (show k) ++ " was called for some reason"
 choose n k = (fact n) `div` ((fact k) * (fact $ n - k))
 
 

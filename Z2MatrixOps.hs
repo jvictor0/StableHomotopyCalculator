@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, RankNTypes #-}
-module MatrixOps where
+module Z2MatrixOps where
 
 import Data.Array.Unboxed
 import Utils

@@ -43,4 +43,4 @@ admisArray largeDeg = array (0,largeDeg) $ (0,[toFModule $ Sq []]):
           | otherwise  = map (++[i]) $ concatMap (\k -> (aft k (j-i))) [2*i..j]
 
 sq :: [Int] -> SteenrodAlgebra
-sq ns = toFModule $ Sq ns
+sq ns = decompAdmis $ Sq ns
