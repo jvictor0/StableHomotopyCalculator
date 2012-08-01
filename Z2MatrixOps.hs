@@ -72,3 +72,13 @@ tstMat1 = fromLists [
   [1,0],
   [1,1]]
 
+preimages :: Vector ZMod2 -> Matrix ZMod2 -> [Vector ZMod2]
+preimages v vs = map (\u -> array (a,c) [(j,u!j) | j <- [a..c]]) preres
+  where mat = array ((a-1,b),(c, d)) $ [((a-1,j), v!j) | j <- [b..d]] ++ (assocs vs)
+        ((a,b),(c,d)) = bounds vs
+        (_,kern,_,_) = imageKernel mat
+        preres = filter (\u -> (u!(a-1)) /= 0) kern
+
+vin v vs = [] /= (preimages v $ array ((1,a),(length vs,b)) $ 
+                   (concat $ zipWith (\i u -> [((i,j),u!j) | j <- [a..b]]) [1..] vs))
+  where (a,b) = bounds v

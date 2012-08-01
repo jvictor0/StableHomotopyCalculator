@@ -16,6 +16,9 @@ class (Num r) => Module m r where
 class (Ord m, Show m) => Multiplicative m where
   unit :: m
   (<*>) :: m -> m -> m
+  x <*> y
+   | x == unit   = y
+   | y == unit   = x
   _ <*> _ = error "<*> not implemented, which is not required"
   (<**>) :: m -> m -> FreeModule m Integer
   x <**> y = toFModule $ x <*> y

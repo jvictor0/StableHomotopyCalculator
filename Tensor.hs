@@ -6,12 +6,15 @@ import Module
 import Utils
 import LinearAlgebra
 import qualified Data.Map as Map
-
+import Utils
 
 data Tensor a b = Tensor a b deriving (Eq,Ord)
 
 instance (Show a, Show b) => Show (Tensor a b) where
   show (Tensor a b) = (rshow a) ++ "(x)" ++ (rshow b)
+
+instance (UnShow a, UnShow b) => UnShow (Tensor a b) where
+  unShow str = let (a,b) = splitSubstr "(x)" str in Tensor (unShow a) (unShow b)
 
 instance (Multiplicative a, Multiplicative b) => Multiplicative (Tensor a b) where
   unit = Tensor unit unit

@@ -5,6 +5,9 @@ import Module
 import Utils
 import ZMod2
 import Data.Array
+import Data.List
+import Data.Char
+
 
 data SteenrodSquare = Sq [Int] deriving (Eq, Ord)
 
@@ -12,6 +15,14 @@ instance Show SteenrodSquare where
   show (Sq []) = "1"
   show (Sq [x]) = "Sq^" ++ (texShow x)
   show (Sq ls) = "Sq^{\\{" ++ (cim "," show ls ) ++ "\\}}"
+
+instance UnShow SteenrodSquare where
+  unShow "1" = Sq[]
+  unShow str = if take (length "Sq^{\\{") str == "Sq^{\\{"
+               then Sq $ read $ "[" ++ (dropLast (length "\\}}") $ drop (length "Sq^{\\{") str) ++ "]"
+               else if isDigit $ last str
+                    then Sq [read [last str]]
+                    else Sq [read $ (init $ drop (length "Sq^{") str)]
 
 type SteenrodAlgebra = FreeModule SteenrodSquare ZMod2
 
