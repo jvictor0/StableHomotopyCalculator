@@ -1,5 +1,7 @@
 module E2Calculator where
 
+import Data.Time
+import Timing 
 import Module
 import SteenrodAlgebra
 import E2Gen
@@ -15,7 +17,7 @@ import Utils
 
 data E2GenData = E2GD {largestDegree :: Int,
                        gensDiffMap :: A.Array (Int,Int) (Map.Map E2Gen Z2FreeSteenrodVS)
-                      }
+                      } deriving (Eq,Ord)
 
 instance Show E2GenData where
   show dta = cim "\n" (\(x,y) -> (show x) ++ " |--> " ++ (show y)) $ concat $ map (Map.toList . snd) $ assocs $ gensDiffMap dta
@@ -59,7 +61,7 @@ extendE2Data :: E2GenData -> Int -> E2GenData
 extendE2Data dta_old ld = dta
   where dta = E2GD {largestDegree = ld,
                     gensDiffMap = array ((0,0),(ld,ld)) [((i,j),result i j) | i <- [0..ld], j <- [0..ld]]}
-        result i j = if i+2 < largestDegree dta_old && j+2 < largestDegree dta_old
+        result i j = if i <= (largestDegree dta_old) && (j+1) < (largestDegree dta_old)
                      then (gensDiffMap dta_old)!(i,j)
                      else extraGensAt serreCartanBasis dta i j
         serreCartanBasis = admisArray ld

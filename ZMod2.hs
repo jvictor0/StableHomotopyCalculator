@@ -3,6 +3,7 @@ module ZMod2 where
 
 import Utils
 import Data.Array.Unboxed
+import System.Random
 
 newtype ZMod2 = ZMod2 Bool deriving (IArray UArray, Eq, Ord)
 
@@ -17,6 +18,9 @@ instance Num ZMod2 where
   abs = dumbError
   signum = dumbError
 
+instance Random ZMod2 where
+  random g = let (r,g') = random g in (ZMod2 r,g')
+  randomR (ZMod2 x,ZMod2 y) g = let (r,g') = randomR (x,y) g in (ZMod2 r, g')
 
 {-
 {-# INLINE from #-}

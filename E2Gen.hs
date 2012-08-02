@@ -16,7 +16,7 @@ englishLetters :: [String]
 englishLetters = map return ['A'..'Z']
 
 letters :: [String]
-letters = "i":(englishLetters ++ (concatMap (\ls -> map (ls++) englishLetters) letters))
+letters = "i":(englishLetters ++ (concatMap (\ls -> map (ls++) englishLetters) $ tail letters))
 
 degree (E2Gen _ x _) = x
 grating (E2Gen x _ _) = x

@@ -1,6 +1,8 @@
 module Utils where
 
 import Data.List
+import System.Time
+
 
 xor True = not
 xor False = id
@@ -46,6 +48,8 @@ isPowerOf n k
 
 divisible k n = 0 == n `mod` k 
 
+average lst = (fromInteger $ sum lst) / (fromIntegral $ length lst)
+
 -- and this
 dumbError = error "dumb error"
 
@@ -76,3 +80,5 @@ splitSubstr str ls = sst [] ls
                       then (reverse fst,drop n rst)
                       else sst ((head rst):fst) (tail rst)
         n = length str
+
+

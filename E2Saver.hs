@@ -30,15 +30,16 @@ loadE2Page ld = do
     [ld_old] <- fmap ((map read).words) $ hGetLine f :: IO [Int]
     putStrLn $ "We have data up to " ++ (show ld_old)
     conts <- fmap ((map words).lines)  $ hGetContents f
-    hClose f
     let dt_old = readE2Data conts ld_old
     let result =  extendE2Data dt_old ld
-    reportE2Page (largestDegree dt_old) result
+    putStrLn $ "There are " ++ (show $ length conts) ++ " known generators"
+    hClose f
+    when (ld_old < ld) $ reportE2Page  result
     return result
     else do
     putStrLn "no data found"
     let result = calculateE2Page ld
-    reportE2Page 0 $ result
+    reportE2Page result
     return result
 
 readE2Data :: [[String]] -> Int -> E2GenData
@@ -48,11 +49,12 @@ readE2Data lsts ld = E2GD {largestDegree = ld,
                             | s <- [0..ld], t_s <- [0..ld]]}
   where tup = Map.fromList $ map (\(hed:terms) -> (unShow hed, sum $ map (toFModule . unShow) terms)) lsts
 
-reportE2Page :: Int -> E2GenData -> IO ()
-reportE2Page ld_old dta = do
-  let scb = admisArray (largestDegree dta)
-  forM_ [max 0 (ld_old-2)..(largestDegree dta)-2] $ \t_s -> do
-    forM_ [max 1 (ld_old-2)..(largestDegree dta)-2] $ \s -> do
+reportE2Page :: E2GenData -> IO ()
+reportE2Page dta = do
+  totalStartTime <- getClockTime
+  let scb = admisArray $ (largestDegree dta)
+  forM_ [0..(largestDegree dta)-2] $ \t_s -> do
+    forM_ [1..(largestDegree dta)] $ \s -> do
       startTime <- getClockTime
       let inputSize = sum $ map (\j -> (Map.size$ (gensDiffMap dta)!(s,j)) * (length $ scb!(t_s-j))) [0..t_s-1]
       let outputSize = sum $ map (\j -> (Map.size$ (gensDiffMap dta)!(s-1,j)) * (length $ scb!(t_s-j+1))) [0..t_s]
@@ -67,6 +69,11 @@ reportE2Page ld_old dta = do
   clearData
   let outputStr = (show $ largestDegree dta) ++ "\n"
                   ++ (cim "\n" (\(gen,targ) -> (show gen) ++ " " ++ (cim " " (show . fst) $ toAList targ))
-                      $ Map.toList $ Map.unions $ map snd $ assocs $ gensDiffMap dta)
+                      $ concat $  map Map.toList $ map snd $ assocs $ gensDiffMap dta)
   writeFile outputFileName outputStr
+  totalEndTime <- getClockTime
+  putStrLn $ "The computation finished in " ++ (timeDiffToString $ diffClockTimes totalEndTime totalStartTime)
   putStrLn "Save successful"
+
+
+
