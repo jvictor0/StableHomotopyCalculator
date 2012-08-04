@@ -19,6 +19,7 @@ linearMap mp v = smap (\x -> case Map.lookup x mp of
                  v
             
 -- f is assumed to be linear here
+-- BE SUSPUSION OF THE RUNETIME OF THIS FUNCTIONS!!!!!!
 toMatrix :: (Multiplicative m, Multiplicative m', Num r, Eq r,
              IArray UArray r)
             => Basis m -> Basis m' -> (FreeModule m r -> FreeModule m' r) -> Matrix r
@@ -27,8 +28,9 @@ toMatrix dom codom f = array ((a,b),(c,d)) [((i,j),coefOf (codom!j) fi)
   where (a,c) = bounds dom
         (b,d) = bounds codom
 
+decompose :: (IArray Array x,IArray UArray r,Num r, Eq r, Ord x) => Basis x -> FreeModule x r -> Vector r
+decompose domain v = array (bounds domain) $ map (\(x,y) -> (x,coefOf y v)) $ assocs domain
 
-decompose domain v = amap (flip coefOf v) domain
-
+recompose :: (IArray Array x,IArray UArray r,Num r, Eq r, Ord x) => Basis x -> Vector r -> FreeModule x r 
 recompose domain v = fromAList $ map (\(i,r) -> (domain!i,r)) $ assocs v
 

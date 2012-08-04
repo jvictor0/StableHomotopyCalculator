@@ -4,6 +4,7 @@ import System.CPUTime
 import Control.Monad
 import System.Environment
 import Control.Exception
+import Data.Time
 
 time obj = do
   startTime <- getCPUTime
@@ -11,7 +12,9 @@ time obj = do
     True -> return ()
     False -> putStr "" 
   endTime <- getCPUTime
-  return (endTime - startTime)
+  return $ endTime - startTime
+
+psToTime = picosecondsToDiffTime
 
 timeIO obj = do
   startTime <- getCPUTime

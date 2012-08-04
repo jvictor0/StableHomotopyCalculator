@@ -1,10 +1,11 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 module Tensor where
 
 import BiFunctor
 import Module
 import Utils
 import LinearAlgebra
+import Data.Array.Unboxed
 import qualified Data.Map as Map
 import Utils
 
@@ -57,5 +58,18 @@ reduceStructure  :: (Eq r, Ord m, Multiplicative m', Num r)
                     => FreeModule (Tensor m' m) r -> FreeModule m (FreeModule m' r)
 reduceStructure v = vmap (\(Tensor r m,k) -> (m,k*>(toFModule r))) v
 
-induceLinear mp v = induceStructure $ linearMap (Map.map reduceStructure mp) $ reduceStructure v
+induceLinear f v = induceStructure $ linearMap f $ reduceStructure v
+-- remember, HOM is contravarient in the first arg
+induceMap mp = Map.map reduceStructure mp
 
+
+induceMatrix :: (Multiplicative x, Multiplicative sq, Num k, Eq k, IArray UArray k)
+                =>  Basis (Tensor sq x) -> Basis (Tensor sq x) -> Map.Map x (FreeModule (Tensor sq x) k) -> Matrix k
+induceMatrix dom codom mp = array ((a,b),(c,d)) $ concat $ 
+                            map (\i -> let rs = lk $ dom!i
+                                       in map (\j -> ((i,j),coefOf (codom!j) rs)) [b..d]) [a..c]
+  where lk (Tensor sq x) = case Map.lookup x mp of
+          Nothing -> 0
+          (Just y) -> (ltensor $ toFModule sq) * y
+        (a,c) = bounds dom
+        (b,d) = bounds codom

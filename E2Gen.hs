@@ -20,6 +20,8 @@ letters = "i":(englishLetters ++ (concatMap (\ls -> map (ls++) englishLetters) $
 
 degree (E2Gen _ x _) = x
 grating (E2Gen x _ _) = x
+biDeg v = let (Tensor (Sq sqs) (E2Gen s t_s _)) = fst $ head $ toAList v in (s,t_s+(sum sqs))
+
 
 instance Show E2Gen where
   show (E2Gen s t_s primes) = (letters!!s) ++ "_" ++ (texShow $ s + t_s) ++ (take primes $ repeat '\'')
@@ -33,6 +35,7 @@ instance UnShow E2Gen where
 instance Multiplicative E2Gen where
   unit = E2Gen 0 0 0
 
+type Z2StGen = Tensor SteenrodSquare E2Gen
 type FreeSteenrodModule = FreeModule E2Gen SteenrodAlgebra
 type Z2FreeSteenrodVS = FreeModule (Tensor SteenrodSquare E2Gen) ZMod2
 

@@ -1,13 +1,12 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, RankNTypes #-}
 module Z2MatrixOps where
 
-import Data.Bits
+import Data.Bits hiding (xor)
 import Timing
 import System.CPUTime
 import System.Random
 import Data.Array.Unboxed
-import Data.Array.MArray 
-import Utils hiding (xor)
+import Utils
 import Data.Array.ST hiding (unsafeFreeze)
 import Control.Monad
 import Control.Monad.ST
@@ -28,10 +27,9 @@ import Data.Word
 -- the results of running these functions has aleady been generated, so no worries there, but it is sad, and this needs to be fixed.  
 
 
-addColumn ::  (STUArray s (Int,Int) Word64) -> ((Int,Int),(Int,Int)) -> ST s ()
+addColumn ::  (STUArray s (Int,Int) Bool) -> ((Int,Int),(Int,Int)) -> ST s ()
 addColumn arr ((a,c),(source,target)) = do
-  let newLen = (c-a+1)`div` 64
-  forM_ [0..newLen] $ \i -> do
+  forM_ [a..c] $ \i -> do
     src <-  readArray arr (i,source)
     targ <- readArray arr (i,target)
     writeArray arr (i,target) (src `xor` targ)
@@ -63,24 +61,24 @@ testZ2FreezeThaw g i j = runST $ do
   return $ mat == freezeMat
     
 rrefWPivs :: Matrix ZMod2 -> (Matrix ZMod2,Map.Map Int Int, Map.Map Int Int)
-rrefWPivs arr' =   runST $ do 
+rrefWPivs arr' =  runST $ do 
   let ((a,b),(c,d)) = bounds arr'
   pivs <- newSTRef $ (Map.empty,Map.empty)
-  arr <- thawToZ2Mat arr'
+  arr <- thaw $ (amap (==1)) arr'
   forM_ [a..c] $ \i -> do
     (to,from) <- readSTRef pivs
-    fnd <-  findM (\j -> fmap (&&(not $ Map.member j from)) (readZ2Mat arr (i,j) a)) [b..d] 
+    fnd <-  findM (\j -> fmap ((&&(not $ Map.member j from))) (readArray arr (i,j))) [b..d] 
     case fnd  of
       Nothing -> return ()
       (Just j) -> do
         modifySTRef pivs $ \(to,from) ->  (Map.insert i j to, Map.insert j i from)
         forM_ ([b..j-1]++[j+1..d]) $ \k -> do
-        ifM (readZ2Mat arr (i,k) a)
+        ifM (readArray arr (i,k))
             (addColumn arr ((a,c),(j,k)))
             (return ())
-  result <- freezeZ2Mat arr ((a,b),(c,d))
+  result <- unsafeFreeze arr 
   (to,from) <- readSTRef pivs
-  return (result,to,from)
+  return (amap ZMod2 result,to,from)
 
 rref :: Matrix ZMod2 -> Matrix ZMod2
 rref arr = let (a,_,_) = rrefWPivs arr in a
@@ -117,6 +115,8 @@ preimages v vs = map (\u -> array (a,c) [(j,u!j) | j <- [a..c]]) preres
         (_,kern,_,_) = imageKernel mat
         preres = filter (\u -> (u!(a-1)) /= 0) kern
 
+preimage v vs = head $ preimages v vs
+
 vin v vs = [] /= (preimages v $ array ((1,a),(length vs,b)) $ 
                    (concat $ zipWith (\i u -> [((i,j),u!j) | j <- [a..b]]) [1..] vs))
   where (a,b) = bounds v
@@ -128,7 +128,6 @@ randMatIO m n = randomIO >>= (\g -> return $ randMat (mkStdGen g) m n)
 
 timeRref m n = 
   fmap (average) $ mapM (const $ timeIO $ fmap rref $ randMatIO m n) [1..100]
-
 
 timeRrefs :: (Double -> Double) -> IO ()
 timeRrefs poss = do

@@ -11,7 +11,10 @@ import System.IO
 import Module
 import Control.Monad
 import System.Time
-
+import LinearAlgebra
+import Tensor
+import Z2MatrixOps
+import Timing
 
 outputFileName = "E2DataFile.e2"
 
@@ -46,7 +49,8 @@ readE2Data :: [[String]] -> Int -> E2GenData
 readE2Data lsts ld = E2GD {largestDegree = ld,
                            gensDiffMap = array ((0,0),(ld,ld))
                                          [((s,t_s),Map.filterWithKey (\(E2Gen s' t_s' _) _ -> (s,t_s) == (s',t_s')) tup)
-                            | s <- [0..ld], t_s <- [0..ld]]}
+                            | s <- [0..ld], t_s <- [0..ld]],
+                           knownGens = map fst $ Map.toList tup}
   where tup = Map.fromList $ map (\(hed:terms) -> (unShow hed, sum $ map (toFModule . unShow) terms)) lsts
 
 reportE2Page :: E2GenData -> IO ()

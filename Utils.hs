@@ -81,4 +81,5 @@ splitSubstr str ls = sst [] ls
                       else sst ((head rst):fst) (tail rst)
         n = length str
 
+zipMap f ls = zip ls $ map f ls
 
