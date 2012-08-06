@@ -65,7 +65,7 @@ extendE2Data :: E2GenData -> Int -> E2GenData
 extendE2Data dta_old ld = dta
   where dta = E2GD {largestDegree = ld,
                     gensDiffMap = array ((0,0),(ld,ld)) [((i,j),result i j) | i <- [0..ld], j <- [0..ld]],
-                    knownGens = map fst $  concatMap (Map.toList . snd) $ assocs $ gensDiffMap dta}
+                    knownGens = map fst $  concatMap (Map.toList . snd) $filter (\((i,j),x) -> j +1 < ld) $  assocs $ gensDiffMap dta}
         result i j = if i <= (largestDegree dta_old) && (j+1) < (largestDegree dta_old)
                      then (gensDiffMap dta_old)!(i,j)
                      else extraGensAt serreCartanBasis dta i j
@@ -90,13 +90,15 @@ differential dta v = smap (\(Tensor sq x@(E2Gen s t_s _)) -> (toFModule $ Tensor
 
 isCycle dta v = 0 == differential dta v
 
--- it is assume that v is a cycle = boundry and that it is homogenous
+-- it is assume that v is a cycle = boundry
 -- we unfortunately need the Serre Cartan Basis for this
+-- we removed the homogeniety restriction
 antiDifferential :: (Array Int [SteenrodAlgebra]) -> E2GenData -> Z2FreeSteenrodVS -> Z2FreeSteenrodVS
 antiDifferential scb dta 0 = 0
-antiDifferential scb dta v = (recompose dom) $ preimage (decompose cdom v)  mat
-  where (dom,cdom,mat) = makeMatrix dta scb (s+1) (t_s-1)
-        (s,t_s) = biDeg v
+antiDifferential scb dta v = sum $ map (\((dom,cdom,mat),u) -> recompose dom $ preimage (decompose cdom u)  mat) parts 
+  where parts = map (\((s,t_s),u) -> (makeMatrix dta scb (s+1) (t_s-1),u)) $ Map.toList $ Map.map sum pmap
+        pmap = foldr (\u mp -> Map.insertWith (++) (biDeg u) [u] mp) Map.empty $ map (\(m,r) -> r *> (toFModule m)) $ toAList v
+        
 
 
 
