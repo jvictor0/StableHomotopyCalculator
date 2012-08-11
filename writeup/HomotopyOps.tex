@@ -1,0 +1,39 @@
+
+
+\section{Homotopy Operations}
+
+We would like to define homotopy operations on the Adams Spectral Sequence.
+Formally, these operations will share many properties with cohomology operations.  
+In fact, though we don't use this, the adem relationship still holds.  
+However, it is not the case that $Sq^0$ is the identity any more.  
+
+We restrict here to the case of the Adams Spectral Sequence spheres for $p=2$.
+Let $C_*$ be a $\A$-free resolution of $\Z/2$.  
+All tensors are taken over $\Z/2$ unless otherwise noted.  
+
+
+TODO: GENERALIZE!
+
+Recall the cup product, and that it could be computed using a map 
+\[\Delta_0:C_*\to C_*\otimes C_*\]
+Let $\rho$ be the flipping map $C_*\otimes C_*\to C_*\otimes C_*$.  
+Because $\A$ is co-commutative, $\rho$ restricted to $\Z/2\otimes \Z/2$ is the identity.
+Since $\rho$ obviously commutes with the differentials, it is homotopic to the identity.
+Thus $\rho\Delta_0\sim\Delta_0$, and we can call that homotopy $\Delta_1$.  
+
+\begin{Lemma}[Luilevicius\cite{luiCycs}]
+  For each $i$, there is a degree $i$ $\A$-chain map
+  \[\Delta_i:C_*\to C_*\otimes C_*\]
+  with
+  \[\partial\Delta_i+\Delta_i\partial=\rho\Delta_{i-1}+\Delta_{i-1}\]
+  Given two sequences $\Delta_i$ and $\Delta'_i$, for the least $i$ such that $\Delta_i\ne \Delta_i'$, $\Delta_i\sim\Delta_i'$.  
+\end{Lemma}
+
+\begin{mydef}
+  Let $u\in Hom_\A^t(C_s,k)$ be a cocycle.  
+  \[(u\cup_i u)(\sigma)=(u\otimes u)(\Delta_i\sigma)\]
+  \[Sq_i([u])=Sq^{2s-i}([u])=u\cup_i u\]
+\end{mydef}
+Notice this is well defined when we pass to homology
+
+

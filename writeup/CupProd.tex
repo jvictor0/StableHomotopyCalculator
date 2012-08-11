@@ -1,0 +1,57 @@
+
+
+
+\section{Cup product structure}
+
+Now that we have set up the Adams Spectral Sequence, lets get some additional structure on it.  
+We will begin with some homological algebra from \cite[Chapter XI]{ElienCart}
+
+$A$ be a Hofp $k$-algebra, let $C_*,C_* '$ be $A$-free resolutions of $A$-modules $R, R'$.
+Then $Ext_A^*(R,k)=H^*(Hom(C_*,k))$.  
+We add the technical assumption that higher $Tor_*^k(R,R')=0$, so that $C_*\otimes C_*'$ is acyclic.  
+We wish to define a product.
+\[\cup : Ext^*_A(R,k)\otimes Ext^*_A(R',k)\to Ext^*_A(R\otimes_k R',k)\]
+The product goes as follows: $C_*\otimes_k C*'$ is a free $A\otimes_k A$-resolution of $k\otimes_k k \cong k$ \cite[XI Prop 1.1]{ElienCart}.  
+Then, considering two representative cocycles $u\in Hom_A(C_*,k)$ and $u'\in Hom_A(C_*',k)$, we can form the tensor product 
+\[u\otimes u' \in Hom_{A\otimes A}(C_*\otimes_k C_*',k\otimes_k k)\]
+Recall that the differential of $C_*\otimes_k C_*'$ is $d\otimes 1 + 1\otimes d'$, so this is clearly a cocycle.  
+The diagonal map:
+\[\psi : A\to A\otimes_k A\]
+will induce a map from $k \otimes_k k$ as an $A\otimes A$ module to it as an $A$ module, so we induce a map $Ext_{A\otimes_k A}\to Ext_A$, and composing we get the desired map.  
+
+\begin{mydef}
+The \emph{cup product} is the product defined above
+\end{mydef}
+
+We want to actually be able to compute this map with specific resolutions.  Suppose that $D_*$ is a resolution of $A\otimes_k A$ such that you want $Hom_A(D_*,k)$ to represent cocycles in $Ext_A(A\otimes_k A,k)$.  
+The above product gives representing cocycles in $Hom_A(C_*\otimes_k C_*',k)$. 
+Given an $A$-chain map 
+\[\Delta_0:D_*\to C_*\otimes_k C_*'\]
+then we have the formula, for $\sigma \in D_*$,
+\[(u\cup v)(\sigma) = (u\otimes v)(\Delta_0 \sigma)\]
+if and only if $\Delta_0$ is the identity on $R\otimes_k R'$.  Such a $\Delta_0$ is of course unique up to homotopy.
+There exist general proceedures to find such a $\Delta_0$, implemented in my software, described in \cite[XI Prop 5.2]{ElienCart}
+
+
+
+If you consider the caes that $R'=k$, then $R\otimes_k R'\cong R$, we have that $Ext_A(R,k)$ is a left-module over $Ext_A(k,k)$, and
+if also $R=k$ then this makes $Ext_A(k,k)$ a ring.  In this case we can let $C_*=C_*'=D_*$ and compute $\Delta_0:C_*\to C_*\otimes_k C_*$.  
+
+
+
+Recall that, for spectra, $E^*(X\wedge X')\cong E^*(X)\otimes E^*(X')$, so this product is defined on the $E_2$ page of the adams spectral sequence.  
+\begin{Theorem}[Adams \cite{adams1}]
+The cup product on $E_2$ induces a product
+\[E_r^{s,t}(X)\otimes E_r^{s',t'}(X')\to E_r^{s+s',t+t'}(X\wedge X')\]
+that satisfies
+\[d_r(xy)=d_r(x)y+(-1)^{t-s}xd_r(y)\]
+\end{Theorem}
+
+\begin{proof}
+TODO
+\end{proof}
+
+
+This relationship will be extremely useful in computing differentials.  In fact, for $p=2$, all the differentials for $t-s<15$ can be computed with just this law.  
+
+

@@ -1,15 +1,28 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage{fullpage}
+\usepackage{amsthm}
+\usepackage{enumitem} 
+\usepackage{amsfonts}
+
 \begin{document}
 
-\title{Stable Homotopy Groups of Spheres and The Hopf Invariant One Problem}x
+\newcommand{\A}[0]{\mathcal{A}}
+\newcommand{\Z}[0]{\mathbb{Z}}
+
+\newtheorem{mydef}{Definition}
+\newtheorem{Theorem}{Theorem}
+\newtheorem{Lemma}{Lemma}
+
+
+
+\title{Stable Homotopy Groups of Spheres and The Hopf Invariant One Problem}
 \author{Joseph Victor}
 \maketitle
 
 \input{Intro.tex}
-
-
-
+\input{CupProd.tex}
+\input{HomotopyOps.tex}
+\input{SomeDiffs.tex}
 
 
 \begin{thebibliography}{99}
@@ -18,6 +31,20 @@
   Frank Adams
   \emph{On Structure and Applications of the Steenrod Algebra}
   
+\bibitem{ElienCart}
+  Samuel Eilenberg and Henri Cartan
+  \emph{Homological Algebra}
+
+\bibitem{MasseyEC}
+  W.S. Massey
+  \emph{Products In Exact Couples}
+
+\bibitem{Kahn1}
+  Daniel Kahn
+  \emph{Cup-i Products and the Adams Spectral Sequence}
+
+\bibitem{luiCycs}
+  TODO: Fill out this entry
 
 \end{thebibliography}
 \end{document}

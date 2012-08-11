@@ -89,8 +89,8 @@ makeHtpyOpData scb dta = HOD arr dta
                   Nothing -> 0
                   (Just x) -> x
 
-hos = (loadE2Page 10) >>= (\it -> return $ makeHtpyOpData (admisArray 10) it)
-doit i j  = hos >>= (\(HOD arr _) -> return $ Map.lookup (E2Gen i j 0) $ arr!0)
+hos = (loadE2Page 20) >>= (\it -> return $ makeHtpyOpData (admisArray 20) it)
+doit k i j  = hos >>= (\(HOD arr _) -> return $ Map.lookup (E2Gen i j 0) $ arr!k)
 cup_i_test i s t_s = hos >>= (\h -> return $ cup_iProd h i (E2Gen s t_s 0))
 
 -- Does sq_i :: E^{s,t-s} -> E^{2s-i,2t-2s-i}?  I think so, yes, I do think so.  
