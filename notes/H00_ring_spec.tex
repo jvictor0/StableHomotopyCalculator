@@ -1,0 +1,85 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage[small,nohug,heads=vee]{diagrams}
+\diagramstyle[labelstyle=\scriptstyle]
+
+
+\begin{document}
+
+\newcommand{\A}[0]{\mathcal{A}}
+\newcommand{\W}[0]{\mathcal{W}}
+\newcommand{\U}[0]{\mathcal{U}}
+\newcommand{\Z}[0]{\mathbb{Z}}
+
+\newcommand{\mapsfrom}[0]{\mbox{\reflectbox{$\mapsto$}}}
+\newcommand{\from}[0]{\mbox{\reflectbox{$\to$}}}
+
+
+\newtheorem{Def}{Definition}
+\newtheorem{Theorem}{Theorem}
+\newtheorem{Lemma}{Lemma}
+\newtheorem{Unknown}{Unknown}
+
+
+\title{Notes on $H_{\infty}$ Ring Spectra For $E_r^{*,*}(S^0,S^0)$ for $p=2$}
+\author{Joseph Victor}
+\maketitle
+
+The point of this writeup is to help me understand fully the contents of the book $H_\infty$ Ring Spectra by May, Bruner, McClur and Steinberger, especially as it pertains to my situation.
+I'm going to try to do all the deails as much as possible, and include details that mean my computations equal the ones they do.  
+I will use the tag Unknown to mark unknown things, for instance, like:
+
+\begin{Unknown}
+  Why is this thing actually an injective resolution
+\end{Unknown}
+
+I will mostly be dealing with chapters that Bruner writes.  
+I hope to fully understand all of Bruner's differentials.  
+
+Before we start, some known unknowns:
+
+\begin{Unknown}
+  What is the true significance of the symbol 
+  \[D_2(X)=\frac{S^\infty\times_{\Z/2} X\wedge X}{S^\infty\times_{\Z/2}\{*\}}\]
+\end{Unknown}
+
+\begin{Unknown}
+  Why does Bruner use injective resolutions for everything?
+  Is it just so that you can use any $E$?  
+  Certainly all the theorems true over arbitrary $E$ are true over $H\Z/2$, are the proofs easier over $E$?
+\end{Unknown}
+  
+
+\input{H00_RS_ChapterIV.tex}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{adams1}
+  Frank Adams
+  \emph{On Structure and Applications of the Steenrod Algebra}
+  
+\bibitem{ElienCart}
+  Samuel Eilenberg and Henri Cartan
+  \emph{Homological Algebra}
+
+\bibitem{MasseyEC}
+  W.S. Massey
+  \emph{Products In Exact Couples}
+
+\bibitem{Kahn1}
+  Daniel Kahn
+  \emph{Cup-i Products and the Adams Spectral Sequence}
+
+\bibitem{luiCycs}
+  TODO: Fill out this entry
+
+\bibitem{hrs}
+  TODO: Fill out thsi very important entry
+
+\end{thebibliography}
+\end{document}

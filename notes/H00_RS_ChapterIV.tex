@@ -1,0 +1,223 @@
+\section{Homotopy Theory of $H_\infty$ Ring Spectra}
+
+Let's set up some theory so that the differentials can start falling
+
+\subsection{Cohomology of Hopf Algebras}
+
+Let $A$ be a $k$-Hopf Algebra.  We have then
+\[\psi:A\to A\otimes A\]
+\[\eta:k\to A\]
+\[\epsilon:A\to k\]
+
+They satisfy some obvious diagrams.  
+
+\begin{Def}
+  A right $A$-comodule is what you think it is.  It should be a $k$-module that has
+  \[\psi_M:M\to M\otimes A\]
+  Some diagrams commute, just like for Hopf Algebras
+\end{Def}
+
+The category of comodules is abelian if $A$ is $k$-flat, which is is.  
+We have $Hom_A(M,N)\subseteq Hom_k(M,N)$ for $A$-comodules $M,N$.  
+
+There is a functor adjoint to forgetting the comodule structure that goes
+\[P\leadsto P\otimes A\]
+\begin{Def}
+  We call such a comodule \emph{extended}
+\end{Def}
+
+
+
+Of course we have
+\[Hom_k(M,P)\cong Hom_A(M,p\otimes A)\]
+where $M$ is any comodule, but on the left side it is considered just as a $k$-module.
+
+by sending
+\[f\mapsto (f\otimes1)\circ \psi_M\]
+\[(1\otimes\epsilon)\circ f \mapsfrom f\]
+
+\begin{Lemma}
+  Retracts of extended comodules form an injective class relative to the R-split exact sequences, and we have a comparison theorem.
+  In particular this applies to direct sums and extended comodules themselves.  
+\end{Lemma}
+
+\begin{proof}
+  This seems a bit strange at first, but let $f:X\to Y$ be an injection and $g:X\to P\otimes A$.  
+  Also, let $\sigma:Y\to X$ be $k$-section to $f$.  Then, letting $\hat{g}=(1\otimes \epsilon)g$, we have
+  \[h=(\hat{g}\sigma\otimes 1)\psi_Y\]
+  extends $g$ to $Y$, since we are just using adjoints
+\end{proof}
+
+For a $k$-split exact sequence, we may choose the splittings to be differentials.  
+
+We can have a diagonal coproduct on $M\otimes A$ as well as the extended one.  They are isomorphic by the adjoint of $1\otimes \epsilon$. 
+
+Let $\overline{A}$ be the cokernel of $\eta$, $p$ the projection and $t$ the $k$-splitting such that $tp=1-\eta\epsilon$.  
+If $M$ is an $A$-comodule then we have a $k$-split short exact sequence of $A$-comodules 
+\[0\to M\xrightarrow{1\otimes\eta} M\otimes A\xrightarrow{1\otimes p} M\otimes \hat{A}\to 0\]
+split by $1\otimes \epsilon$ and $1\otimes t$.  
+
+We get the following cannonical injective resolution
+
+\begin{Def}
+  The \emph{normalized canonical resolution} $C(A,M)$ is $C_*$ where
+  \[C_s=M\otimes \overline{A}^s\otimes A\]
+  \[d_s=(1\otimes\eta)(1\otimes p)\]
+  and the splitting $\sigma_s$ is
+  \[\sigma_s=(1\otimes t)(1\otimes \epsilon)\]
+  We say the homological degree is $s$, the internal degree is $t=$ the sume of the degrees of the tensor factors and total degree is $t-s$.  
+  Define also $C(N,A,M)$ by 
+  \[C_{s,t}(N,A,M)=Hom_A^t(N,C_s(A,M))\]
+\end{Def}
+
+\begin{Theorem}
+  $C(A,M)$ is a an injective resolution of $M$
+\end{Theorem}
+
+\begin{proof}
+  Obviously we're good on the injective part, since its split and $d^2=\sigma^2=0$.  
+  $\sigma$ is a contracting homomorphism, so this is also exact.
+\end{proof}
+
+\subsection{Products and Steenrod Operations in Ext}
+
+Let $M,N$ be $A$ comodules such that $M$ is an $A$-algebra and $N$ is an $A$-coalgebra.
+Write $\phi:M^r\to M$ and $\Delta:N\to M^r$ to be iterated products.  
+We write $\epsilon_N:N\to k$ and $\eta_M:k\to M$ as the unit and counit.  
+We have a unit 
+\[Ext_A(k,k)\to Ext_A(N,M)\]
+given by, if $u$ is a cocycle in $C(k,A,k)$, then we have $(\epsilon_N\otimes 1)u\eta_N$ is a cocycle in $C(N,A,M)$.  
+
+We can of course form $C(A,M)\otimes C(A',M')$ as an $A\otimes A'$-comodule with contracting homotopy $\sigma\otimes1+\eta\epsilon\otimes\sigma$.  
+There is, by the comparison theorem, a unique chain homotopy class of $A\otimes A'$-maps between this and $C(A\otimes A',M\otimes M')$ over the identity.
+Using the coproduct we can make $C^n$ into an $A-comodule$ for any $A$-comodule $A$, and of course we have a map
+\[C(A,M)^n\to C(A,M)\]
+over the product $\phi$.  This map makes $C(A,M)$ into a DGA.  The functoriality of the tensor product and $Hom(\Delta,\phi)$ makes $C(N,A,M)$ into a $k$-DGA, so $Ext_A(N,M)$ is an algebra over $Ext_A(R,R)$.  
+
+We now want to make the Steenrod Operations work out, so let $k=\mathbb{F}_2$ and $R=k[\alpha]/(\alpha^2)$.  
+Let $\W_*$ be the cannonical resolution of $R$ as a a group ring, and $e_i$ generates $\W_i$.
+Let $K$ be a chain complex, and let $Z/2$ act on $K^2$ by flipping and diagonally on $\W\otimes K^2$.  
+Assume further that $K$ is a $k$-DGA and we have an $R$ map
+\[\theta:\W\otimes K^2\to K\]
+with
+\[\theta(e_0\otimes x\otimes y) = xy\]
+We also assme
+\[\mu K\otimes K\to K\]
+satisfies
+\[\mu(\theta\otimes\theta)\sim \theta(1\otimes\mu\otimes\mu)\]
+Letting $\U$ be any $k[S_4]$-free resolution of $k$, and let $\tau=Z/4\subset S_4$.  
+Let 
+\[\omega:\W\otimes \W\otimes \W\to \U\]
+be a $k[\tau]$ chain map over the identity.
+Can we make the following diagram commute (up to homotopy) with a $\xi$?
+\begin{diagram}
+  \W\otimes\W\otimes \W\otimes K^4 & \rTo^{\omega\otimes 1} & \U\otimes K^4  \\
+  \dTo &                              &                           &           \rdTo^\xi\\                                   
+     &                                &                            &           &    K \\
+   &                              &                           &           \ruTo^\theta\\                                   
+  \W\otimes \W\otimes K^2 \otimes \W\otimes K^2 & \rTo^{1\otimes \theta\otimes \theta} & \W\otimes K^2
+\end{diagram}
+
+\begin{Unknown}
+\label{ademdiag}
+Why do we care?
+I think the idea might be that this makes the Adem relation work out, for some reason.  
+When I figure this out I might move this diagram to after the steenrod ops are defined.  
+I should probably also figure out if my definition is equivalent.  
+The way to do that is of course to say that they satisfy the same properties which uniquely define the operations.
+\end{Unknown}
+
+We show for $K-C(A,M)$ that $\theta$ and $\xi$ exist.  
+
+\begin{Lemma}
+  Let $G=Z/r$ be a cyclic group and $K=C(A,M)$.  
+  let $\U$ be a free $k[G]$ resolution of $k$.  
+  Then there is a unique $G$-equivarient map
+  \[\Phi:\U\otimes K^r\to K\]
+  such that
+  \[\Phi(\U_0\otimes k_1\otimes ... \otimes k_r)=k_1...k_r\]
+  and if $ri>(r-1)j$ then 
+  \[\Phi(\U_i\otimes (K^r)_j)=0\]
+\end{Lemma}
+
+\begin{proof}
+  We write $\Phi_{i,j}=\Phi|\U_i\otimes (K^r)_j$.
+  We automatically get $\Phi_{0,*}$.  
+  We let $\tilde{\Phi}_{i,j}$ be the adjoint of $\Phi$, and $S$ be the contracting homotopy of $K^r$.  
+  Define
+  \[\tilde\Phi_{i,j}=(d\tilde\Phi_{i,j-1}-\tilde{\Phi}_{i-1.j-1}\widetilde{(d\otimes 1)})(1\otimes S)\]
+  A lengthy but simple induction shows this is a chain map, 0 when it should be.  \cite[Page 98]{hrs}
+
+  We now show uniqueness.  Let $\theta$ also satisfy the conditions, but one can simply use adjoints and contracting homotopies to define a homotopy inductively.  
+\end{proof}
+
+We can now define 
+\[\Phi_* : \W\otimes C(N,A,M)^2\to C(N,A,M)\]
+by
+\[\Phi_*(w\otimes \varphi_1\otimes \varphi_2)=n\mapsto \Phi(w\otimes((\varphi_1\otimes\varphi_2)\Delta(n)))\]
+
+
+\begin{Def}
+  Let $x\in Ext^{s,t}_A(N,M)$.  Define
+  \[Sq^i(x)=\Phi_*(e_{i-t+s}\otimes x\otimes x)\]
+\end{Def}
+
+\begin{Theorem}
+  We have natrual maps:
+
+  \begin{enumerate}
+    \item $Sq^i :Ext_A^{s,t}\to Ext_A^{s+t-2i,2t}$ 
+    \item $Sq^i=0$ unless $t_s\le i \le t$.  
+    \item $Sq^{t-s}(x)=x^2$
+    \item The Cartan Formula holds
+    \item The Adem relation holds
+  \end{enumerate}
+\end{Theorem}
+
+\begin{proof}
+  The first three are easy.  $C(N,A,M)$ is something called a Cartan Object and an Adem Object, implying the other two
+\end{proof}
+
+\begin{Unknown}
+  What on earth is a Cartan object or Adem object, and what implies this?
+  Apparently the diagram I said was satisfied by $\xi$ implies the Adem relation, while somehow co-commutativity implies Cartan.  
+\end{Unknown}
+
+\subsection{The Adams Spectral Sequence}
+
+Let
+\[Y_0\from Y_1\from Y_2\from ...\]
+be a sequence of spaces and let $Y_{s,r}=Y_s/Y_{s+r}$.  Then we have fibrations
+\begin{diagram}
+  Y_{s+r}& &\rTo^i & & Y_s \\
+  &\luTo^\partial & & \ldTo^p\\
+  && Y_{s,r}
+\end{diagram}
+which induce the exact couple 
+\begin{diagram}
+  \bigoplus [X,Y_{s}]_{t-s}& &\rTo^{i_*} & & \bigoplus [X,Y_s]_{t-s} \\
+  &\luTo^{\partial_*} & & \ldTo^{p_*}\\
+  && \bigoplus[X,Y_{s,1}]_{t-s}
+\end{diagram}
+
+I enjoy writing it as a staircase diagram, making some lemmas easier to visualize.  
+
+\begin{diagram}
+  \vdots &&&& \vdots  &&&& \vdots \\
+  \dTo & &&& \dTo  & &&& \dTo &&& &  \\
+  [X,Y_s]_{t-s+1} & \rTo & [X,Y_{s,1}]_{t-s+1} & \rTo & [X,Y_{s+1}]_{t-s} & \rTo & [X,Y_{s+1,1}]_{t-s} & \rTo & [X,Y_{s+2}]_{t-s-1}\\
+  \dTo & &&& \dTo  & &&& \dTo &&& &  \\
+  [X,Y_{s-1}]_{t-s+1} & \rTo & [X,Y_{s-1,1}]_{t-s+1} & \rTo & [X,Y_{s}]_{t-s} & \rTo & [X,Y_{s,1}]_{t-s} & \rTo & [X,Y_{s+1}]_{t-s-1}\\
+  \dTo & &&& \dTo  & &&& \dTo &&& &  \\
+  [X,Y_{s-2}]_{t-s+1} & \rTo & [X,Y_{s-2,1}]_{t-s+1} & \rTo & [X,Y_{s-1}]_{t-s} & \rTo & [X,Y_{s-1,1}]_{t-s} & \rTo & [X,Y_{s}]_{t-s-1}\\
+  \dTo & &&& \dTo  & &&& \dTo &&& &  \\
+  \vdots &&&& \vdots  &&&& \vdots 
+\end{diagram}
+
+
+Of course the differentials can be calculated as follows: if $f\in [X,Y_{s,1}]_{t-s}$, then it has some image in $\overline{f}\in [X,Y_{s+1}]_{t-s+1}$.  
+If the image of $\overline{f}$ can be homotopicly restricted to $Y_{s+r}$, then $f$ survives to $E_r$ and its image in $[X,Y_{s+r}]_{t-s+1}$ represents $d_r(f)$, which is a permanent cycle.  
+
+\begin{Lemma}
+  
+\end{Lemma}
