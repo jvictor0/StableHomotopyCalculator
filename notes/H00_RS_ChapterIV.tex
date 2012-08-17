@@ -219,5 +219,188 @@ Of course the differentials can be calculated as follows: if $f\in [X,Y_{s,1}]_{
 If the image of $\overline{f}$ can be homotopicly restricted to $Y_{s+r}$, then $f$ survives to $E_r$ and its image in $[X,Y_{s+r}]_{t-s+1}$ represents $d_r(f)$, which is a permanent cycle.  
 
 \begin{Lemma}
-  
+  \cite[3.3,3.4,pate 103]{hrs}
 \end{Lemma}
+
+Let $H=HZ/2$ and recall $H_*(X)=\pi_*(X\wedge HZ/2)$.  Recall, by the universal coeficient theorem, that $H^*(H)=Hom_k(\A,k)=\A_*$.  
+Recall that the dual steenrod algebra is a polynomial algebra on generators $\xi_k$ of degree $2^k-1$.  
+The element $\xi_k$ is dual to the admisable sequence $Sq^{\{2^{i-1},2^{i-2},...,Sq^1\}}$.  
+The comultiplication is of course given
+\[\phi(\xi_k)=\sum_{i=0^k}\xi^{2^i}_{k-i}\otimes \xi_i\]
+
+We use the following Adams resolution
+\begin{Def}
+  The Adams resolution of a space $Y$ is a sequence $Y_0=Y$, $Y_{s+1}=Y_s\wedge\overline{H}$.  
+  Notice that this makes $Y_{s,1}=Y_s\wedge H$
+\end{Def}
+
+
+Since $H_*(Y_{s,1})=H_*(Y_s\wedge H)=H_*(Y_s)\otimes \A_*$ is an extended $\A_*$ comodule, we can splice the $Y_i$'s together to get the following injective resolution
+\[0\to H_*(Y)\to H_*(Y_{0,1})\to H_*(\Sigma Y_{1,1})\to H_*(\Sigma^2 Y_{2,1})\to ...\]
+This means the $E_2$ page is indeed Ext.
+
+
+\begin{Lemma}
+  This is the cobar resolution.  The $E_1$ term of the resulting spectral sequence is $C(H_*X, \A_*,H_*Y)$.  
+\end{Lemma}
+
+This follows from the fact that $\overline{A_*}=H_*(\overline{H})$ and the Kunneth isomorphism, which I've been using no problem.  
+We have, also that 
+\[[X,Y_{s,1}]_*=Hom_{\A_*}(H_*X,H_*Y_{s,1})\]
+so the $E_2$ term is what we want it to be.  
+
+
+\begin{Lemma}
+  If $f:X\to Y$ is extended to a chain map of $H_*(X_{*,1})\to H_*(Y_{*,1})$, then we can extend $f$ to a map of Adam's resolutions.
+\end{Lemma}
+
+\begin{proof}
+  Use the 5 lemma of spectra and the isomorphism $[Z,Y_{i,1}]_*=Hom_{\A_*}(H_*(Z),H_*(Y_{i,1}))$
+\end{proof}
+
+\subsection{Smash Products in the Adams Spectral Sequence}
+
+\begin{Theorem}
+Smashing representative maps give a product
+\[E_r^{*,*}(X,Y)\otimes E_r^{*,*}(X',Y') \to E_r^{*,*}(X\wedge X',Y\wedge Y')\]
+\end{Theorem}
+Since the smash product of Adams resolutions is an Adams resolution, this is easy to show.
+We also automatically have DGA structure for $E_*^{*,*}(S,S)$.  
+For other $E\ne H$, this is actually hard, but we don't worry about that here.
+
+\subsection{Extended Powers in the Adams Spectral Sequence}
+
+Recall
+\[D_2Y=S^2 \ltimes_{\Z/2} (Y\wedge Y)\]
+the wedge product has the obvious $Z/2$ action and $S^2$ has the antipodal map.  
+
+Suppose given a map
+\[\xi:D_2Y \to Y\]
+extending $Y\wedge Y\to Y$.  We want to use this to make steenrod operations explicit in $Ext_{\A_*}(M,H_*Y)$.  
+
+Let $W_i$ be the $i$-skeleton of a $\Z/2$-free CW complex $W$ which is contractible, and $W_0=\Z/2$.  Define
+\[D_\pi^iY=W_i\ltimes_{\Z/2} (Y\wedge Y)\]
+ 
+Let $Y_i$ be an Adams resolution.  Let $F_*=Y_*\wedge Y_*$.  Define $Z_{i,s}=W_i\ltimes_{\Z/2} F_s$ and $B_i=W_i/\Z/2$. 
+
+\begin{Lemma}
+  We have some facts about spaces:
+  \begin{enumerate}
+    \item $Z_{i-1,s}$ and $Z_{i,s+1}$ are subcomplexes of $Z_{i,s}$.  
+    \item $\frac{Z_{i,s}}{Z_{i-1,s}}=\frac{B_i}{B_{i-1}}\wedge F_s$
+    \item $\frac{Z_{i,s}}{Z_{i-1,s}\cup Z_{i,s+1}}=\frac{B_i}{B_{i-1}}\wedge \frac{F_s}{F_{s+1}}$
+    \item the diagram on page 111 commutes
+  \end{enumerate}
+\end{Lemma}
+
+\begin{proof}
+  maybe later
+\end{proof}
+
+\begin{Theorem}
+  There exist maps $\xi_{i,s}:Z_{i,s}\to Y_{s-1}$ with the following diagram commuting.  
+\[  \begin{diagram}
+    D_2Y & \lTo & Z_{i,s}\\
+    \dTo^\xi & & \dTo^{\xi_{i,s}}\\
+    Y & \lTo & Y_{s-i}
+  \end{diagram}\hspace{15mm}
+  \begin{diagram}
+    Z_{i,s-1} & \lTo & Z_{i,s} & \lTo & Z_{i-1,s}\\
+    \dTo^{\xi_{i,s-1}} & & \dTo^{\xi_{i,s}} & &\dTo^{\xi_{i-1,s}}\\
+    Y_{s-1-i} & \lTo & Y_{s-i} & \lTo & Y _{s-i+1}
+  \end{diagram}\]
+\end{Theorem}
+
+
+\begin{proof}
+  When $i=0$ this is just the extension of the smash product $F_s\to Y_s$.  
+  By induction suppose we need to define $\xi_{k,s}$.  
+  The obstruction lies in $[Z_{k,s}/Z_{k-1,s},Y_{s-k-1,1}]$.
+  This is of course equal to a $Hom_{\A_*}$ group, and the inclusion of $F_s\to F_{s-1}$ induces 0 in homology, the obstruction is 0.  
+\end{proof}
+
+Let $\W_k=\pi_k(W_k/W_{k-1})$, $h$ be Hurewics and $\kappa$ be Kunneth.  
+Then $\Phi=(\xi_{k,s})_*\kappa(h\otimes 1)$.   This means we can get an explicit class of $Sq^i$.   
+
+\subsection{Milgram's Generalization}
+
+\begin{Unknown}
+  What is the point of this Spectral Sequence
+\end{Unknown}
+
+\begin{Theorem}
+  Let 
+  \[\z=Z_0\from^{f_0} Z_1\from^{f_1} Z_2\from ...\]
+  then
+  \begin{enumerate}
+    \item there is a SS 
+      \[E_2^{s,t}(X,\z)=\bigoplus E_2^{s-i,t-i}(X,Cf_i)\]
+      which converges to $[X,Cf_i]_*$
+    \item It has a smash product pairing
+    \item A map of $\z$ to the smash product pairing gives a map of spectral sequences converging to a map of homotopy groups
+    \item The smash product pairing agrees with such induced maps
+  \end{enumerate}
+\end{Theorem}
+
+We omit the proof, since it follows pretty much the same logic as the original and is very technical.  
+
+\subsection{Homotopy operations for $H_\infty$ Ring Spectra}
+
+\begin{Unknown}
+  Why if $k=1$ is the only useful, why state for general $k$
+\end{Unknown}
+
+\begin{Def}
+  Let $\alpha\in Y_m(D_jS^n)$.  Then define 
+  \[\alpha^*:\pi_n\to \pi_m\]
+  by the composite 
+  \[S^m\xrightarrow{\alpha} D_jS^n\wedge Y\xrightarrow{D_jf\wedge 1} D_jY\xrightarrow{\xi} Y\]
+\end{Def}
+
+\begin{Lemma}
+  \begin{enumerate}
+    \item $\alpha^*$ is natrual
+    \item $?^*$ is additive
+    \item The inclusion $i:S^{2n}\to D_2S^n$ induces $i^*(x)=x^2$
+  \end{enumerate}
+\end{Lemma}
+
+We adopt the notation $x\in \pi_nY$ is detected by $\overline{x}\in E_2^{s,n+s}(S,Y)$.  
+
+We have a sequence 
+\[D=D_2^{2s}S^n\from ...\from D_2^0S^{2n}\]  
+
+We have for each $i$
+\[D^i_2S^n\xrightarrow{D_2(x)} D^i_2Y_S\xrightarrow{\xi_{i,2s}} Y_{2s-i}\]
+and so by section 6 we have
+\[P(x):E^{*,*}_r(S,D)\to E^{*,*}_r(S,Y)\]
+and
+\[P(x):E^{*,*}_r(S,D\wedge Y)\to E^{*,*}_r(S,Y)\]
+
+\begin{Lemma}
+  $E_2^{*,*}(S,D)$ is free over $E_2(S,S)$ on enerators $e_i\in E_2^{2s-i,2s+2n}(S,D)$
+\end{Lemma}
+
+This follows from the deffinition of the spectral sequence as a direct sum.  
+Note that $e_i$ is the $2n_i$-cell of $D_2S^n$.
+
+\begin{Theorem}
+  $P(x)(e_i)=Sq^{i+n}(\overline{x})$
+\end{Theorem}
+
+\begin{proof}
+  We have $P(x)(e_i)$ is represented by
+  \[S^{2n+i}\xrightarrow{e_i} \frac{W_i}{W_{i-1}}\wedge S^n\wedge S^n\xrightarrow{1\wedge \overline{x}\wedge \overline{x}}\frac{W_i}{W_{i-1}}\wedge Y_{s,1}\wedge Y_{s,1}
+  \xrightarrow{\xi_{i,2s}} Y_{2s-i,1}\]
+\end{proof}
+
+Since this converges, we have $\alpha\in \pi_XD^{2s}_2S^n$ is detected by some $\sum a_ke_k$ with $a_k\in E_2(S,S)$.  
+We have then that $\alpha^*(x)$ is detected by $\sum a_kSq^{k+n}(\overline{x})$.  The same holds for $Y_*D_2^{2s}S^n$.  
+
+\begin{Lemma}
+  if $d_r(ae_k)=\sum a_ie_{k_i}$ in $E_r(S,D\wedge Y)$ then 
+  \[d_r(aSq^{n+k}\overline{x})=\sum a_iSq^{k_i+n}\overline{x}\]
+\end{Lemma}
+
+With the exception of the results I skipped, we are now ready for chapter V and real computations.
+
