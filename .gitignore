@@ -2,3 +2,8 @@
 *.o
 *.hi
 Main
+*.aux
+*.bak
+*.log
+*.gz
+E2DataFileBK30.e2
