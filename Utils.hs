@@ -29,6 +29,12 @@ texShow s = if length ss > 1 then "{" ++ ss ++ "}" else ss
   where ss = show s
 
 
+safeHead [] = Nothing
+safeHead (x:xs) = Just x
+
+safeTail [] = Nothing
+safeTail (x:xs) = Just xs
+
 
 -- some easy math
 fact :: Int -> Integer
@@ -52,7 +58,7 @@ average lst = (fromInteger $ sum lst) / (fromIntegral $ length lst)
 
 -- and this
 dumbError = error "dumb error"
-
+nyi = error "Not yet implemented"
 
 -- simple class
 class UnShow u where
@@ -83,3 +89,5 @@ splitSubstr str ls = sst [] ls
 
 zipMap f ls = zip ls $ map f ls
 
+
+maybeIf pred thn = if pred then Just thn else Nothing
