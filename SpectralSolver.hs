@@ -1,5 +1,6 @@
 module SpectralSolver where
 
+import Data.List
 import Data.Either
 import Data.Array
 import Control.Monad.Trans.Maybe
@@ -35,6 +36,16 @@ leibnizRule i a b = (slNot $ stDefined a) ||| (slNot $ stDefined b) ||| (slNot $
 leibnizRuleGen :: Int -> E2Gen -> E2Gen -> SpectralLogic
 leibnizRuleGen i g h = leibnizRule i (proj i $ genToST g) (proj i $ genToST h)
 
+-- this may end up being inefficient
+toQuotient' :: [E2PageConst] -> E2Gen -> E2PageConst
+toQuotient' [] x = toFModule x
+toQuotient' (t:ts) x = if x ==  lastT 
+                      then  initT
+                      else toQuotient' (map (toQuotient'' lastT initT) ts) x
+  where lastT = fst $ last $ toAList t
+        initT = fromAList $ init $ toAList t
+toQuotient'' lastT initT x = (smap (\y -> if y == lastT then initT else toFModule y)) x
+toQuotient lst x = smap (\y -> toQuotient' lst y) x
 
 type SSState a = MaybeT (State SSStateData) a
 data SSStateData = SSSD {sssASSData :: ASSData,
@@ -57,28 +68,35 @@ perferredBasis r s t_s = do
     (Just (Right i)) | i == j -> fail ""
     _ -> do
       modify $ \g -> g{sssPerfBasis = Map.insert (r,s,t_s) (Right j) (sssPerfBasis g)}
-      result <- do
-        r_1Basis <- perferredBasis (r-1) s t_s
-        r_1BDiffs <- mapM ((spectralDifferentialExp (r-1)).gensToST) r_1Basis
-        if all isZero r_1BDiffs
-          then do
-          return r_1Basis
-          else if 1 == length r_1Basis
-               then do
-                 return []
-               else error $ "Cannot compute perferred basis in this case because of laziness in E("
-                    ++ (show r) ++ "," ++ (show s) ++ "," ++ show (t_s) ++ ")"
-      modify $ \g -> g{sssPerfBasis = Map.insert (r,s,t_s) (Left result) (sssPerfBasis g)}
+      cycles <- specDiffKern (r-1) s t_s -- currently a stub, works only for orthogonal things
+      pcycs <-  mapM (projectToPage r) cycles -- there is no way in hell this actually works.  
+      result <- mapM specTermToE2PageConst $ nub pcycs
       return result
 
+      
+-- function neesds some work
+specDiffKern :: Int -> Int -> Int -> SSState [SpectralTerm]
+specDiffKern r s t_s = do
+  basis <- perferredBasis (r-1) s t_s
+  diffsBasis <- mapM ((spectralDifferentialExp (r-1)).gensToST) basis
+  let (cycs,ncycs) = partition (\(b,db) -> db == 0) $ zip basis diffsBasis
+  if 1 >= length ncycs then return $ map (gensToST.fst) cycs else error "cannot, at this time, compute kernel due to laziness of programmer"
+
+      
+specTermToE2PageConst :: SpectralTerm -> SSState E2PageConst
+specTermToE2PageConst = nyi
 
 projectToPage :: Int -> SpectralTerm -> SSState SpectralTerm
 projectToPage 2 x = return x
-projectToPage r x = nyi
-                                 
-
+projectToPage r x = do
+  x' <- specTermToE2PageConst x
+  let (s,t_s) = stBiDeg x
+  -- technically no need to go to r-1, but no harm either in next line, might want to make this better
+  quotDenoms <-  mapM (\r' -> perferredBasis r' (s+1) (t_s-r') >>= (mapM ((spectralDifferentialExp r').gensToST))) [2..r-1] 
+  return $ gensToST $ toQuotient (nub $ filter (/=0) $ concat quotDenoms) x'
+  
 spectralDifferential :: Int -> SpectralTerm -> SSState SpectralTerm
 spectralDifferential r tm = nyi
 
-spectralDifferentialExp :: Int -> SpectralTerm -> SSState SpectralTerm
+spectralDifferentialExp :: Int -> SpectralTerm -> SSState E2PageConst
 spectralDifferentialExp r tm = nyi
