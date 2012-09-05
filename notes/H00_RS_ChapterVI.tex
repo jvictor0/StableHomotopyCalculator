@@ -1,0 +1,152 @@
+\section{The Adams Spectral Sequence and Differentials}
+
+I will do section 2 first, if that is ok with you.
+
+\subsection{Extended Powers of Cells}
+
+An element of $E_r^{s,n+s}(X,Y)$ can be represented as a map
+\[(CX,X)\to (Y_s,Y_{s+r}\]
+and of course the cone on a sphere is a disk.  
+
+Consider the space $S^{n-1}$.  We have three spaces we care about, which we will give stupid names
+\[\Gamma_1=\Sigma S^{2n-2}=S^{2n-1}\]
+\[\Gamma_0=C\Gamma_1=D^{2n}\]
+\[\Gamma_2=S^{2n-2}\]
+and of course we have inclusion maps given be the standard cell structure
+\[\Gamma_2\to\Gamma_1\to\Gamma_0\]
+
+Let $W^k$ be the $k$-skeleton of $S^\infty=E\Z/2$.  
+Then we have
+\[W^k\ltimes_{\Z/2} \Gamma_0 \cong C(W^k\ltimes_{\Z/2} \Gamma_1)\]
+\[\Sigma (W^k\ltimes_{\Z/2} \Gamma_1)\cong W^k\ltimes_{\Z/2} S^{2n}\]
+
+
+\newcommand{\extpow}[0]{\ltimes}
+From now on, let $\extpow = \ltimes_{\Z/2}$
+
+since for any map $f:A\to X$ the cofiber is $CA\cup_f X$, we have that
+\[W^{k-1}\extpow \Gamma_1\to W^k\extpow \Gamma_1\to W^{k-1}\extpow \Gamma_0\cup W^k\extpow\Gamma_1\]
+is a cofibration
+
+
+
+Recall/observe
+\[W^k/(\Z/2) \cong P^k\]
+\[\frac{W^k\extpow \Gamma_i}{\W^{k-1}\extpow\Gamma_i}=\Sigma^k\Gamma_i\]
+
+Thus by the previous chapter we have
+\[W^k\extpow \Gamma_2=\Sigma^{n-1}P^{n-1+k}_{n-1}\]
+\[W^k\extpow \Gamma_1=\Sigma^{n-1}P^{n+k}_n\]
+
+Since the cofiber of 
+\[\Sigma^{2n-1} P^{2n-2+k}_{2n-2}\to \Sigma^{2n-1} P^{2n-1+k}_{2n-2}\]
+is a sphere, by above we have
+\[W^{k-1}\extpow \Gamma_0\cup W^k\extpow\Gamma_1=\Sigma^{n-1}P^{n+k}_{n+k-1}=S^{2n+k-1}\]
+
+
+Now we have a 3-d diagram.  
+
+\begin{diagram}
+S^{2n+k-2} & & \rTo & & e^{2n+k-1} & & \\
+& \rdTo_a & & & \vLine & \rdTo_{a_1} & \\
+\dTo & & W^{k-1}\ltimes \Gamma_1 & \rTo & \HonV & & W^{k}\ltimes\Gamma_1 \\
+& & \dTo & & \dTo & & \\
+e^{2n+k-1} & \hLine & \VonH & \rTo & S^{2n+k-1} & & \dTo \\
+& \rdTo_{a_2} & & & & \rdTo^{a_3} & \\
+& & W^{k-1}\ltimes \Gamma_0 & & \rTo & & W^k\ltimes \Gamma_1\cup W^{k-1}\ltimes\Gamma_0 
+\end{diagram}
+
+where $a$ is the attaching map of the top cell, $a_1$ is an inclusion, $a_2=a\wedge 1$ and $a_3$ is an equivalence.  
+
+
+\begin{Lemma}
+given any map 
+\[f:(W^k\ltimes \Gamma_1\cup W^{k-1}\ltimes\Gamma_0,W^{k-1}\ltimes\Gamma_1)\to (Y,B)\]
+if $\pi:Y\to Y/B$, then, with appropriate choice of sign, 
+\[\pi fa_3=fa_1-fa_2\]
+\end{Lemma}
+
+
+Let $v=v_2(n+k)$ and $a\in \pi_{2n+k-2}(W^{k-1}\ltimes\Gamma_1)$.  
+$v$ is, by deffinition, the largest number such that $a$ factors through $W^{k-v}\ltimes\Gamma_1$. 
+Our commutative cube can now become 
+
+
+\begin{diagram}
+S^{2n+k-2} & & \rTo & & e^{2n+k-1} & & \\
+& \rdTo_a & & & \vLine & \rdTo_{a_1} & \\
+\dTo & & W^{k-v}\ltimes \Gamma_1 & \rTo & \HonV & & W^{k-v}\ltimes\Gamma_1\cup e^{2n+k-1} \\
+& & \dTo & & \dTo & & \\
+e^{2n+k-1} & \hLine & \VonH & \rTo & S^{2n+k-1} & & \dTo \\
+& \rdTo_{a_2} & & & & \rdTo^{a_3} & \\
+& & W^{k-v}\ltimes \Gamma_0 & & \rTo & & W^{k-v}\ltimes\Gamma_0\cup e^{2n+k-1}
+\end{diagram}
+
+the lemma is modified accordingly: $f$ need only take $W^{k-1}\ltimes\Gamma_1$ to $B$ and the term $fa_2$ factors through $\W^{k-v}\ltimes\Gamma_0$.  
+
+\subsection{Chain Level Calculations}
+
+We give $\Gamma_0$ a very particular cell structure.  Since $\Gamma_0=D^{2n}=D^n\wedge D^n$, we can let $D^n=S^{n-1}\cup_1 D^{n}$.  We call the chain from the $n$-cell $x$ and the boundry $dx$, so that
+\[C_*(\Gamma_0)=\langle x,dx\rangle\otimes\langle x,dx\rangle\]
+We have then that
+\[C_*(\Gamma_1)=\langle x\otimes dx,dx\otimes x, dx\otimes dx\rangle\]
+and 
+\[C_*(\Gamma_2)=\langle dx\otimes dx\rangle\]
+
+We can then of course write
+\[C_*(W^k\ltimes_{\Z/2})=\W(k)\otimes_{\Z/2}C_*\Gamma_i\]
+and let $s$ be the obvious contracting homotopy.  
+The chain differentials are easy to calculate, so heres what they are
+\[d(dx\otimes dx)=0\]
+\[d(x\otimes dx)=dx\otimes dx = d(dx\otimes x)\]
+\[d(x\otimes x)=dx\otimes x+(-1)^nx\otimes dx\]
+
+\begin{Lemma}
+  in $C_*(W^{i+1}\ltimes\Gamma_1)$, we have, if $i\ne n$ mod 2,
+  \[e_{i+1}\otimes dx\otimes dx\sim (-1)^n e_i\otimes d(x\otimes x)\]
+  and if $i=n$ mod 2, we have
+  \[e_{i+1}\otimes dx\otimes dx\sim (-1)^n e_i\otimes d(x\otimes x) + 2e_i\otimes x\otimes dx\]
+\end{Lemma}
+
+\begin{proof}
+  Simply calculate $d(e_{i+1}\otimes x\otimes dx)$ and you get the relation you need.
+\end{proof}
+
+\begin{Lemma}
+  The inclusion
+  \[W^{i+1}\ltimes \Gamma_{j+1}\to W^{i+1}\ltimes\Gamma_j\]
+  is homotopic to a map
+  \[e:W^{i+1}\ltimes \Gamma_{j+1}\to W^{i}\ltimes\Gamma_j\]
+  If $j=1$, then the map in mod-2 homology is given
+  \[e_*(e_{i+1}\otimes dx\otimes dx = e_i\otimes d(x\otimes x)\]
+\end{Lemma}
+
+\begin{proof}
+  The first part is easy, the map compresses because relevant quotient is higher dimensional than $W^{i+1}\ltimes\Gamma_{j+1}$. The second part follows from the lemma that the source and target elements are homologous mod 2.  
+\end{proof}
+
+
+
+
+\subsection{Reduction to Three Cases}
+
+We can now attempt to reduce differentials in the adams spectral sequence to 3 cases.  
+Let $x\in E_r^{s,s+n}(S,Y)$ and consider $Sq^jx$, which we wish to describe in terms of $d_rx$.  
+Let $k=j-n$.  
+Represent $x$ by a map
+\[(e^n,S^{n-1})\to (Y_s,Y_s+r)\]
+For some unknown reason, let $D^k\Gamma_i$ be the $2n-k+i$ skeleton of $W\ltimes \Gamma_i$.  
+Let $\xi$ denote maps from $D^k\Gamma_i$ to $Y_{2s+ir-k}$.  
+
+The following diagram commutes
+\begin{diagram}
+  D^{k+1}\Gamma_2 & \rTo^e & D^k\Gamma_1\\
+  \dTo^\xi & & \dTo^\xi \\
+  & & Y_{2s+r-k}\\
+  & & \dTo\\
+  Y_{2(s+r)-k-1} & \rTo & Y_{2s+r-k-1}
+\end{diagram}
+
+
+ 
+
