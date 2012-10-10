@@ -2,7 +2,10 @@ module Utils where
 
 import Data.List
 import System.Time
-
+import Data.Maybe
+import qualified Data.Set as Set
+import qualified Data.Map as Map
+import Data.Array
 
 xor True = not
 xor False = id
@@ -76,6 +79,13 @@ findM f (x:xs) = do
 ifM :: (Monad m) => (m Bool) -> (m a) -> (m a) -> (m a)
 ifM b t e = b >>= (\b' -> if b' then t else e)
 
+firstJustM :: (Monad m) => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+firstJustM f [] = return Nothing
+firstJustM f (a:as) = do 
+  a' <- f a
+  if isNothing a' 
+    then firstJustM f as 
+    else return $ a'
 
 -- and some list stuff
 dropLast n = reverse . (drop n) . reverse
@@ -91,3 +101,8 @@ zipMap f ls = zip ls $ map f ls
 
 
 maybeIf pred thn = if pred then Just thn else Nothing
+
+sortNub :: (Ord a) => [a] -> [a]
+sortNub = Set.toList . Set.fromList
+
+ixMapToArray mp = array (minimum $ Map.elems mp, maximum $ Map.elems mp) $ map (\(i,j) -> (j,i)) $ Map.toList mp 

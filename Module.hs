@@ -64,6 +64,9 @@ fromFModule v
   | isHomogenious v = head $ toAList v
   | otherwise       = error "Cannot call fromFModule on nonHomogenious vectors"
 
+
+
+
 instance (Eq r, Ord m, Num r) => Module (FreeModule m r) r where
   r *> v = rmap (r*) v
 

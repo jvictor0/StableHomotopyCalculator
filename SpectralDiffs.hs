@@ -29,13 +29,15 @@ data SLData = EqualZero SpectralTerm |
               Or (Set.Set SpectralLogic) |
               XOr (MS.MultiSet SpectralLogic) |
               Not SpectralLogic |
-              Tag SpectralTag SpectralTerm 
+              Tag SpectralTag SpectralTerm |
+              BitVar BitVarTag
             deriving (Eq,Ord)
 
 data SpectralTag = Defined | PermCycle deriving (Eq,Ord)
+data BitVarTag = DiffCoef E2PageConst E2PageConst deriving (Eq,Ord)
 
 instance Show SpectralTag where
-  show (Defined) = "defined?"
+  show Defined = "defined?"
   show PermCycle = "perm-cycle?"
 
 instance Show SpectralLogic where
@@ -62,6 +64,10 @@ instance Show SLData where
   show (And ms) = lispShow "and" $ map show $ Set.toList ms
   show (Or ms) = lispShow "or" $ map show $ Set.toList ms
   show (EqualZero a) = lispShow "zero?"$ map show [a]
+  show (BitVar v) = show v
+
+instance Show BitVarTag where
+  show (DiffCoef targ src) = "d_{" ++ (show targ) ++ "}(" ++ (show src) ++ ")"
 
 class Normable hb where
   isNorm :: hb -> Bool
@@ -187,6 +193,7 @@ isZero _ = False
 isOne (ST _ (Dots d)) = (d == toFModule unit)
 isOne v =  ((isProj v) && (isOne $ head $ getChildren v))
 
+
 isAnd (SL _ (And _)) = True
 isAnd _ = False
 isOr (SL _ (Or _)) = True
@@ -202,6 +209,16 @@ isTag _ = False
 isTrue = (LTrue ==)
 isFalse = (LFalse ==)
 
+linearTerm (ST _ (WithCoef _ a@(ST _ (Dots _)))) = Just a
+linearTerm a@(ST _ (Dots _)) = Just a
+linearTerm _ = Nothing
+
+diffCoef src trg = ST (biDegToAux (a,b)) 
+                   (WithCoef (SL slauxDefault (BitVar (DiffCoef trg src)))
+                    (gensToST trg))
+  where (E2Gen a b c) = fst $ head $ toAList trg
+                   
+                   
 instance Num SpectralLogic where
   d@(SL v _) + d'@(SL v' _) = slSetNorm False $ SL v $ XOr $ MS.fromList [d,d']
   LFalse + x = x
@@ -252,6 +269,8 @@ a ||| b = SL slauxDefault (Or $ Set.fromList [a,b])
 slNot a = SL slauxDefault $ Not a
 slAnd lst = SL slauxDefault $ And $ Set.fromList lst
 slOr lst = SL slauxDefault $ Or $ Set.fromList lst
+slXOr lst = SL slauxDefault $ XOr $ MS.fromList lst
+
 
 
 stDefined a = SL slauxDefault $ Tag Defined a

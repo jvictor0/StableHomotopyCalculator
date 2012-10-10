@@ -205,11 +205,11 @@ I enjoy writing it as a staircase diagram, making some lemmas easier to visualiz
 \begin{diagram}
   \vdots &&&& \vdots  &&&& \vdots \\
   \dTo & &&& \dTo  & &&& \dTo &&& &  \\
-  [X,Y_s]_{t-s+1} & \rTo & [X,Y_{s,1}]_{t-s+1} & \rTo & [X,Y_{s+1}]_{t-s} & \rTo & [X,Y_{s+1,1}]_{t-s} & \rTo & [X,Y_{s+2}]_{t-s-1}\\
+  [Y,X_s]_{t-s+1} & \rTo & [Y,K_{s}]_{t-s+1} & \rTo & [Y,X_{s+1}]_{t-s} & \rTo & [Y,K_{s+1}]_{t-s} & \rTo & [Y,X_{s+2}]_{t-s-1}\\
   \dTo & &&& \dTo  & &&& \dTo &&& &  \\
-  [X,Y_{s-1}]_{t-s+1} & \rTo & [X,Y_{s-1,1}]_{t-s+1} & \rTo & [X,Y_{s}]_{t-s} & \rTo & [X,Y_{s,1}]_{t-s} & \rTo & [X,Y_{s+1}]_{t-s-1}\\
+  [Y,X_{s-1}]_{t-s+1} & \rTo & [Y,K_{s-1}]_{t-s+1} & \rTo & [Y,X_{s}]_{t-s} & \rTo & [Y,K_{s}]_{t-s} & \rTo & [Y,X_{s+1}]_{t-s-1}\\
   \dTo & &&& \dTo  & &&& \dTo &&& &  \\
-  [X,Y_{s-2}]_{t-s+1} & \rTo & [X,Y_{s-2,1}]_{t-s+1} & \rTo & [X,Y_{s-1}]_{t-s} & \rTo & [X,Y_{s-1,1}]_{t-s} & \rTo & [X,Y_{s}]_{t-s-1}\\
+  [Y,X_{s-2}]_{t-s+1} & \rTo & [Y,K_{s-2}]_{t-s+1} & \rTo & [Y,X_{s-1}]_{t-s} & \rTo & [Y,K_{s-1}]_{t-s} & \rTo & [Y,X_{s}]_{t-s-1}\\
   \dTo & &&& \dTo  & &&& \dTo &&& &  \\
   \vdots &&&& \vdots  &&&& \vdots 
 \end{diagram}

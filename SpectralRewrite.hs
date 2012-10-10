@@ -16,27 +16,14 @@ import qualified Data.MultiSet as MS
 import E2Calculator
 import Module
 
-type Rule a = a -> Maybe a
+type PreRule a = a -> Maybe a
 
--- all that, and I have to do this with explicitness
-normalize :: (Normable s, Normable r,MuRecursive s r, MuRecursive r s) =>
-             [Rule r] -> [Rule s] -> r -> r
-normalize fs gs x
-  | isNorm x  = x
-  | otherwise = case compactRules fs $ x' of
-    Nothing -> setNorm True x'
-    (Just x'') -> normalize fs gs x''
-    where x' = muRecChildren x (map (normalize fs gs) rs, map (normalize gs fs) ss)
-          (rs,ss) = muGetChildren x
+compactPreRules :: [PreRule a] -> PreRule a
+compactPreRules rs x = safeHead $ mapMaybe ($x) rs
 
-  
-unNormalize x = muMapBot (setNorm False) (setNorm False :: SpectralTerm -> SpectralTerm) x
 
-compactRules :: [Rule a] -> Rule a
-compactRules rs x = safeHead $ mapMaybe ($x) rs
-
-upgradeRule :: (DataWrap dw dat) => Rule dat -> Rule dw
-upgradeRule r wr = fmap (wrapData wr) $ r $ getData wr
+upgradePreRule :: (DataWrap dw dat) => PreRule dat -> PreRule dw
+upgradePreRule r wr = fmap (wrapData wr) $ r $ getData wr
 
 acSplit :: (Recursive acop) => (acop -> Bool) -> acop -> Maybe (acop,[acop])
 acSplit pred r = let (ots,res) = partition pred $ getChildren r in
@@ -50,12 +37,12 @@ acInserts lst r = recChildren r $ lst ++ (getChildren r)
 acMap :: (Recursive acop) => (acop -> acop) -> acop -> acop
 acMap f r = recChildren r $ map f $ getChildren r
 
-associate :: (Recursive r) => (r -> Bool) -> Rule r
+associate :: (Recursive r) => (r -> Bool) -> PreRule r
 associate pred s = do
   (s',insts) <- acSplit pred s
   return $ acInserts (concatMap getChildren insts) s'
 
-distribute :: (Recursive r) => (r -> Bool) -> (r -> r -> r) -> Rule r
+distribute :: (Recursive r) => (r -> Bool) -> (r -> r -> r) -> PreRule r
 distribute pred prod s = do
   (s',dists) <- acSplit pred s
   let s'' = acInserts (tail dists) s'
@@ -63,13 +50,13 @@ distribute pred prod s = do
   return $ acMap (prod s'') sm
 
 -- should prolly do a real search
-idempote :: (Recursive r, Eq r) => (r -> Bool) -> Rule r
+idempote :: (Recursive r, Eq r) => (r -> Bool) -> PreRule r
 idempote pred s = do
   (s',_) <- acSplit pred s
   return s'
 
 -- should prolly do a real search
-nilpote :: (Recursive r, Eq r) => (r -> Bool) -> r -> Rule r
+nilpote :: (Recursive r, Eq r) => (r -> Bool) -> r -> PreRule r
 nilpote pred x s = do
   guard $ any pred $ getChildren s
   return x
@@ -93,7 +80,7 @@ opPushDown sumat pred t = do
 
 
 ----- now, some actual rules ------
-easyZero :: ASSData -> Rule SpectralTerm
+easyZero :: ASSData -> PreRule SpectralTerm
 easyZero _ v
   | isZero v = Nothing
 easyZero (ASSData gdt _ _)  v@(ST v' _) = maybeIf (or [s < 0, t_s < 0, t_s>0 && s > t_s, (inRange (bounds $ gensDiffMap gdt) (s,t_s)) && 0 == (Map.size $ (gensDiffMap gdt)!(s,t_s))])
@@ -105,6 +92,23 @@ equalsZero (SL _(EqualZero z))
   | isDots z = Just 0
 equalsZero _ = Nothing
 
+coefOverDot (ST v (WithCoef c (ST v2 (Dots gs)))) 
+  | (length $ toAList gs) > 1 =
+     map (\(g,1) -> (ST v (WithCoef c (ST v2 (Dots $toFModule g))))) $ toAList gs
+coefOverDot (ST v (Dots gs)) 
+  |  (length $ toAList gs) > 1 =
+    map (\(g,1) -> (ST v (Dots $toFModule g))) $ toAList gs
+coefOverDot x = [x]
+
+linearEqualZero (SL _ (EqualZero (ST _ (WithCoef x y)))) = Just $ x ||| (eqZero y)
+linearEqualZero (SL _ (EqualZero (ST _ (Plus ps)))) = do
+  tms <- mapM (\t -> linearTerm t >>= (return.(flip (,) t))) $ concatMap coefOverDot $ MS.toList ps
+  let gtms = groupBy ((==) `on` fst) $ sortBy (compare `on` fst) tms
+  return $ slAnd $ map (slNot . slXOr . (map (\(a,c) -> case c of
+                                                 (ST _ (WithCoef co _)) -> co
+                                                 (ST _ (Dots _)) -> LFalse))) gtms
+    
+
 dotsZero (ST _ (Dots 0)) = Just STZero
 dotsZero _ = Nothing
 
@@ -113,6 +117,7 @@ easyCoef (ST v (WithCoef 1 x)) = Just x
 easyCoef (ST v (WithCoef _ z))
   | isZero z = Just 0
 easyCoef _ = Nothing
+
 
 easyNot (SL _ (Not (SL v (Not x)))) = Just x
 easyNot (SL _ (Not LTrue)) = Just LFalse
@@ -129,6 +134,7 @@ xorNotRemove t = do
 coefExpand (ST v' (WithCoef xorn x))
   | isXOr xorn = Just $ sum $ map (\r -> (ST v' (WithCoef r x))) $ getChildren xorn
   | otherwise  = Nothing
+
 mod2FoldMS ms = maybeIf (any (>1) $ map snd $ MS.toAscOccurList ms)
                      $   MS.fromAscOccurList $ filter ((>0).snd) $ map event $ MS.toAscOccurList ms
   where event (x,n) = if even n then (x,0) else (x,1)
@@ -143,31 +149,36 @@ expandDefinedProj (SL _ (Tag Defined (ST _ (Projection i x)))) = Just $ edc i
         edc j = (eqZero (diff (j-1) $ proj (j-1) x)) &&& (edc (j-1))
 expandDefinedProj _ = Nothing
 
+plusConstFold  tms = do
+  (t',consts) <- acSplit isDots tms
+  guard $ not $ null $ tail consts
+  return $ acInserts [sum consts] t'
+
 prodConstFold assdt tms = do
   (t',consts) <- acSplit isDots tms
   guard $ not $ null $ tail consts
   prd <- foldM (\res g -> fmap sum $ mapM (\(h,_) -> genMult assdt g h) $ toAList res) (toFModule unit) $ concatMap (\(ST _ (Dots g)) -> map fst $ toAList g) consts :: Maybe E2PageConst
   return $ if prd == 0 then STZero  else acInserts [gensToST prd] t'
 
-basicTermRule dta y = (compactRules $ (easyZero dta):rsl) y
-  where rsl :: [Rule SpectralTerm]
+basicTermPreRule dta y = (compactPreRules $ (easyZero dta):rsl) y
+  where rsl :: [PreRule SpectralTerm]
         rsl = case y of
-          (ST v (Plus _)) -> [associate isSum, idempote isZero,emptyNode STZero, opPushUp sum isDiff, opPushUp sum isProj, singleNode,upgradeRule mod2Fold]
-          (ST v (Times _)) -> [ nilpote isZero STZero,associate isProd, idempote isOne, singleNode, emptyNode 1,
+          (ST v (Plus _)) -> [associate isSum, idempote isZero,emptyNode STZero, opPushUp sum isDiff, opPushUp sum isProj, plusConstFold, singleNode,upgradePreRule mod2Fold]
+          (ST v (Times _)) -> [nilpote isZero STZero,associate isProd, idempote isOne, singleNode, emptyNode 1,
                                distribute isSum (*), opPushUp product isProj, prodConstFold dta]
           (ST v (Differential i x)) -> [nilpote isZero STZero]
           (ST v (Projection i x)) -> [nilpote isZero (STZero)]
           (ST v (SteenrodOp i x)) -> [opPushDown sum isSum,  nilpote isZero (STZero)]
-          (ST v (WithCoef i x)) -> [easyCoef, opPushDown sum isSum, coefExpand]
+          (ST v (WithCoef i x)) -> [easyCoef, opPushDown sum isSum]
           (ST v (Dots _)) -> [dotsZero]
 
-basicLogicRule dta y = (compactRules rsl) y
+basicLogicPreRule dta y = (compactPreRules rsl) y
   where rsl = case y of
           (SL v (And _)) -> [nilpote isFalse 0, associate isAnd, idempote isTrue, emptyNode 1, singleNode]
           (SL v (Or _)) -> [nilpote isTrue 1,associate isOr, idempote isFalse, emptyNode 0, singleNode]
           (SL v (Not _)) -> [opPushDown slOr isAnd, opPushDown slAnd isOr, easyNot]
           (SL v (EqualZero _)) -> [equalsZero]
-          (SL v (XOr _)) -> [associate isXOr, idempote isFalse, emptyNode 0, singleNode, xorNotRemove,upgradeRule mod2FoldXor]
+          (SL v (XOr _)) -> [associate isXOr, idempote isFalse, emptyNode 0, singleNode, xorNotRemove,upgradePreRule mod2FoldXor]
           (SL v (Tag Defined _)) -> [easyDefined0,expandDefinedProj]
           (SL v _) -> []
 
