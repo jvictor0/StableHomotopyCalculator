@@ -97,7 +97,7 @@ cup_iProd (ASSData dta _ (HOD arr)) i gn@(E2Gen s t_s pms) =
                                  .(\g -> fromJust $ Map.lookup g $ arr!i)) $ map fst $ Map.toList $ (gensDiffMap dta)!(2*s-i,2*t_s+i)
 
 
-data ASSData = ASSData E2GenData YonedaData HtpyOpData
+data ASSData = ASSData E2GenData YonedaData HtpyOpData deriving (Eq,Show)
 
 makeASSData dta = ASSData dta (makeYonedaData scb dta) (makeHtpyOpData scb dta)
   where scb = admisArray $ largestDegree dta

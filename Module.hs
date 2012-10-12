@@ -7,8 +7,6 @@ import Utils
 class (Num r) => Module m r where
  (*>) :: r -> m -> m
 
-
-
 -------------------------------------------
 ---  Free Module data type and functions --
 -------------------------------------------

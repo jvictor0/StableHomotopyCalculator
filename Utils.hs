@@ -106,3 +106,7 @@ sortNub :: (Ord a) => [a] -> [a]
 sortNub = Set.toList . Set.fromList
 
 ixMapToArray mp = array (minimum $ Map.elems mp, maximum $ Map.elems mp) $ map (\(i,j) -> (j,i)) $ Map.toList mp 
+
+removeOne pred lst = (head rst,fst ++ (tail rst))
+  where (fst,rst) = break pred lst
+       

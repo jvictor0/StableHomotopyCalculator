@@ -34,7 +34,7 @@ data SLData = EqualZero SpectralTerm |
             deriving (Eq,Ord)
 
 data SpectralTag = Defined | PermCycle deriving (Eq,Ord)
-data BitVarTag = DiffCoef E2PageConst E2PageConst deriving (Eq,Ord)
+data BitVarTag = DiffCoef Int E2PageConst E2PageConst deriving (Eq,Ord)
 
 instance Show SpectralTag where
   show Defined = "defined?"
@@ -67,7 +67,7 @@ instance Show SLData where
   show (BitVar v) = show v
 
 instance Show BitVarTag where
-  show (DiffCoef targ src) = "d_{" ++ (show targ) ++ "}(" ++ (show src) ++ ")"
+  show (DiffCoef i targ src) = "d_" ++ (texShow i) ++ "^{" ++ (show targ) ++ "}(" ++ (show src) ++ ")"
 
 class Normable hb where
   isNorm :: hb -> Bool
@@ -199,7 +199,7 @@ isAnd _ = False
 isOr (SL _ (Or _)) = True
 isOr _ = False
 isXOr (SL _ (XOr _)) = True
-isXor _ = False
+isXOr _ = False
 isNot (SL _ (Not _)) = True
 isNot _ = False
 isEq (SL _ (EqualZero  _)) = True
@@ -208,16 +208,24 @@ isTag (SL _ (Tag _ _)) = True
 isTag _ = False
 isTrue = (LTrue ==)
 isFalse = (LFalse ==)
+isBitVar (SL _ (BitVar _)) = True
+isBitVar _ = False
+
+getTag (SL _ (BitVar x)) = x
+getDots (ST _ (Dots x)) = x
 
 linearTerm (ST _ (WithCoef _ a@(ST _ (Dots _)))) = Just a
 linearTerm a@(ST _ (Dots _)) = Just a
 linearTerm _ = Nothing
 
-diffCoef src trg = ST (biDegToAux (a,b)) 
-                   (WithCoef (SL slauxDefault (BitVar (DiffCoef trg src)))
+diffCoef r src trg = ST (biDegToAux (a,b)) 
+                   (WithCoef (SL slauxDefault (BitVar (DiffCoef r trg src)))
                     (gensToST trg))
   where (E2Gen a b c) = fst $ head $ toAList trg
-                   
+        
+
+instance Module SpectralTerm SpectralLogic where
+  log *> tm = ST (biDegToAux $ stBiDeg tm) $ WithCoef log tm
                    
 instance Num SpectralLogic where
   d@(SL v _) + d'@(SL v' _) = slSetNorm False $ SL v $ XOr $ MS.fromList [d,d']
@@ -256,7 +264,7 @@ proj i t = ST (biDegToAux (s,t_s)) $ Projection i t
 
 genToST g@(E2Gen a b c) = ST (biDegToAux (a,b)) $ Dots $ toFModule g
 gensToST 0 = STZero
-gensToST gs = ST (biDegToAux (a,b)) $ Plus $ MS.fromList $ map (genToST.fst) $ toAList gs
+gensToST gs = ST (biDegToAux (a,b)) $ Dots gs
   where (E2Gen a b c) = fst $ head $ toAList gs
 
 (===) :: SpectralTerm -> SpectralTerm -> SpectralLogic
@@ -273,6 +281,5 @@ slXOr lst = SL slauxDefault $ XOr $ MS.fromList lst
 
 
 
-stDefined a = SL slauxDefault $ Tag Defined a
-
+stDefined i a = slAnd $ map (\j -> eqZero $ diff j $ proj j a) [2..i-1]
 

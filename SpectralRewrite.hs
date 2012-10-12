@@ -15,6 +15,7 @@ import qualified Data.Map as Map
 import qualified Data.MultiSet as MS
 import E2Calculator
 import Module
+import Debug.Trace
 
 type PreRule a = a -> Maybe a
 
@@ -100,14 +101,14 @@ coefOverDot (ST v (Dots gs))
     map (\(g,1) -> (ST v (Dots $toFModule g))) $ toAList gs
 coefOverDot x = [x]
 
-linearEqualZero (SL _ (EqualZero (ST _ (WithCoef x y)))) = Just $ x ||| (eqZero y)
+linearEqualZero (SL _ (EqualZero (ST _ (WithCoef x y)))) = Just $ (slNot x) ||| (eqZero y)
 linearEqualZero (SL _ (EqualZero (ST _ (Plus ps)))) = do
   tms <- mapM (\t -> linearTerm t >>= (return.(flip (,) t))) $ concatMap coefOverDot $ MS.toList ps
   let gtms = groupBy ((==) `on` fst) $ sortBy (compare `on` fst) tms
   return $ slAnd $ map (slNot . slXOr . (map (\(a,c) -> case c of
                                                  (ST _ (WithCoef co _)) -> co
                                                  (ST _ (Dots _)) -> LFalse))) gtms
-    
+linearEqualZero _ = Nothing
 
 dotsZero (ST _ (Dots 0)) = Just STZero
 dotsZero _ = Nothing
@@ -145,31 +146,37 @@ mod2FoldXor (XOr ms) = fmap XOr $ mod2FoldMS ms
 easyDefined0 (SL _ (Tag Defined z)) = maybeIf (isZero z) 1
 easyDefined0 _ = Nothing
 expandDefinedProj (SL _ (Tag Defined (ST _ (Projection i x)))) = Just $ edc i
-  where edc 2 = 1
-        edc j = (eqZero (diff (j-1) $ proj (j-1) x)) &&& (edc (j-1))
+  where edc k = slAnd $ map (\j -> (eqZero (diff (j-1) $ proj (j-1) x))) [3..k]
 expandDefinedProj _ = Nothing
 
 plusConstFold  tms = do
-  (t',consts) <- acSplit isDots tms
+  (t',consts) <-  acSplit isDots tms
   guard $ not $ null $ tail consts
-  return $ acInserts [sum consts] t'
+  return $ acInserts [gensToST $ sum $ map getDots consts] t'
 
 prodConstFold assdt tms = do
-  (t',consts) <- acSplit isDots tms
+  (t',consts) <-  acSplit isDots tms
   guard $ not $ null $ tail consts
   prd <- foldM (\res g -> fmap sum $ mapM (\(h,_) -> genMult assdt g h) $ toAList res) (toFModule unit) $ concatMap (\(ST _ (Dots g)) -> map fst $ toAList g) consts :: Maybe E2PageConst
   return $ if prd == 0 then STZero  else acInserts [gensToST prd] t'
+
+prodCoefFold tms = do
+  (t',coefs) <- acSplit isWCo tms
+  let ands = slAnd $ map (\(ST _ (WithCoef x _)) -> x) coefs
+      prds = acInserts ( map (\(ST _ (WithCoef _ x)) -> x) coefs) t'
+  return $ ands *> prds
+  
 
 basicTermPreRule dta y = (compactPreRules $ (easyZero dta):rsl) y
   where rsl :: [PreRule SpectralTerm]
         rsl = case y of
           (ST v (Plus _)) -> [associate isSum, idempote isZero,emptyNode STZero, opPushUp sum isDiff, opPushUp sum isProj, plusConstFold, singleNode,upgradePreRule mod2Fold]
-          (ST v (Times _)) -> [nilpote isZero STZero,associate isProd, idempote isOne, singleNode, emptyNode 1,
+          (ST v (Times _)) -> [nilpote isZero STZero,associate isProd, idempote isOne, singleNode, emptyNode 1, prodCoefFold,
                                distribute isSum (*), opPushUp product isProj, prodConstFold dta]
           (ST v (Differential i x)) -> [nilpote isZero STZero]
           (ST v (Projection i x)) -> [nilpote isZero (STZero)]
           (ST v (SteenrodOp i x)) -> [opPushDown sum isSum,  nilpote isZero (STZero)]
-          (ST v (WithCoef i x)) -> [easyCoef, opPushDown sum isSum]
+          (ST v (WithCoef i x)) -> [easyCoef]
           (ST v (Dots _)) -> [dotsZero]
 
 basicLogicPreRule dta y = (compactPreRules rsl) y
@@ -177,7 +184,7 @@ basicLogicPreRule dta y = (compactPreRules rsl) y
           (SL v (And _)) -> [nilpote isFalse 0, associate isAnd, idempote isTrue, emptyNode 1, singleNode]
           (SL v (Or _)) -> [nilpote isTrue 1,associate isOr, idempote isFalse, emptyNode 0, singleNode]
           (SL v (Not _)) -> [opPushDown slOr isAnd, opPushDown slAnd isOr, easyNot]
-          (SL v (EqualZero _)) -> [equalsZero]
+          (SL v (EqualZero _)) -> [equalsZero, linearEqualZero]
           (SL v (XOr _)) -> [associate isXOr, idempote isFalse, emptyNode 0, singleNode, xorNotRemove,upgradePreRule mod2FoldXor]
           (SL v (Tag Defined _)) -> [easyDefined0,expandDefinedProj]
           (SL v _) -> []

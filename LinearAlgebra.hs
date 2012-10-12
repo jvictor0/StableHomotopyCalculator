@@ -39,3 +39,4 @@ vlistToMatrix ::  (IArray UArray x) => [Vector x] -> Matrix x
 vlistToMatrix lst = array ((0,a),(length lst-1,b)) 
                     $ concat $ zipWith  (\i ar -> [((i,j), ar ! j) | j <- [a..b]]) [0..length lst -1] lst
   where (a,b) = bounds $ head lst
+        

@@ -7,6 +7,7 @@ import Control.Monad.Trans.Maybe
 import Recursive
 import SpectralDiffs
 import SpectralRewrite
+import SpectralLinear
 import E2Saver
 import E2Calculator
 import E2Gen
@@ -15,8 +16,10 @@ import Utils
 import Module
 import Control.Monad.State
 import qualified Data.Map as Map
+import qualified Data.MultiSet as MS
 import Z2LinearAlgebra
-
+import Data.Maybe
+import Debug.Trace
 
 -- this may end up being inefficient
 toQuotient' :: [E2PageConst] -> E2Gen -> E2PageConst
@@ -34,9 +37,8 @@ type SSMTState a = MaybeT (State SSStateData) a
 type SSState a = State SSStateData a
 data SSStateData = SSSD {sssASSData :: ASSData,
                          sssDiffMap :: Map.Map (Int,E2PageConst) SpectralTerm,
-                         sssPerfBasis :: Map.Map (Int,Int,Int) (Either [E2PageConst] Int),
-                         sssKnownBitVars :: Map.Map BitVarTag SpectralLogic,
-                         sssCounter :: Int}
+                         sssPerfBasis :: Map.Map (Int,Int,Int) (Maybe [E2PageConst]),
+                         sssKnownBitVars :: Map.Map BitVarTag SpectralLogic} deriving (Eq,Show)
 
 
 type Rule a = a -> SSState (Maybe a)
@@ -49,7 +51,10 @@ basicLogicRule dta = preRuleToRule $ basicLogicPreRule dta
 
 ------------------Normalizer--------------
 -- all that, and I have to do this with explicitness
-normalize :: (Normable s, Normable r,MuRecursive s r, MuRecursive r s) =>
+
+-- todo: make it able to break early when doing children and apply specified rules before worrying about children
+
+normalize :: (Normable s, Normable r,MuRecursive s r, MuRecursive r s, Show s, Show r, Num r, Num s, Eq r, Eq s) =>
              [Rule r] -> [Rule s] -> r -> SSState r
 normalize fs gs x
   | isNorm x  = return x
@@ -58,13 +63,15 @@ normalize fs gs x
     rs' <- mapM (normalize fs gs) rs
     ss' <- mapM (normalize gs fs) ss
     let x' =  muRecChildren x (rs',ss')
-    result <-  compactRules fs x'
+    result <- compactRules fs x'
     case result of 
       Nothing -> return $ setNorm True x'
       (Just x'') -> normalize fs gs x''
 
   
-unNormalize x = muMapBot (setNorm False) (setNorm False :: SpectralTerm -> SpectralTerm) x
+unNormalizeLogic x = muMapBot (setNorm False :: SpectralLogic -> SpectralLogic) (setNorm False :: SpectralTerm -> SpectralTerm) x
+unNormalizeTerm x = muMapBot (setNorm False :: SpectralTerm -> SpectralTerm) (setNorm False :: SpectralLogic -> SpectralLogic) x
+
 
 compactRules :: [Rule a] -> Rule a
 compactRules rs x = firstJustM ($x) rs
@@ -75,59 +82,61 @@ compactRules rs x = firstJustM ($x) rs
 -------------------Data organization code-------------------
 
 getGensAt :: Int -> Int -> SSMTState [E2Gen]
-getGensAt s t_s = do
+getGensAt s t_s =  do
   (ASSData d _ _) <- fmap sssASSData get
   return $ map (fst) $ Map.toList $ (gensDiffMap d)!(s,t_s)
 
 
 perferredBasis :: Int -> Int -> Int -> SSMTState [E2PageConst]
-perferredBasis 2 s t_s = fmap (map toFModule) $ getGensAt s t_s 
-perferredBasis r s t_s = do
+perferredBasis 2 s t_s =  fmap (map toFModule) $ getGensAt s t_s 
+perferredBasis r s t_s =  do
   old_res <- fmap ((Map.lookup (r,s,t_s)) . sssPerfBasis) get
-  j <- fmap sssCounter get
   case old_res of
-    (Just (Left result)) -> return result
-    (Just (Right i)) | i == j -> fail ""
+    (Just (Just result)) -> return result
+    (Just Nothing) -> fail ""
     _ -> do
-      modify $ \g -> g{sssPerfBasis = Map.insert (r,s,t_s) (Right j) (sssPerfBasis g)}
-      cycles <- specDiffKern (r-1) s t_s -- currently a stub, works only for "orthogonal" things
-      fmap nub $ mapM (projectToPage r) cycles -- there is no way in hell this actually works generally.  
+      modify $ \g -> g{sssPerfBasis = Map.insert (r,s,t_s) Nothing (sssPerfBasis g)}
+      cycles <- specDiffKern (r-1) s t_s -- currently a stub, works only if the number of noncycles is 1 or 0
+      result <- fmap nub $ mapM (projectToPage r) cycles -- there is no way in hell this actually works generally.  
+      modify $ \g -> g{sssPerfBasis = Map.insert (r,s,t_s) (Just result) (sssPerfBasis g)}
+      return result
 
       
 -- function neesds some work
 specDiffKern :: Int -> Int -> Int -> SSMTState [SpectralTerm]
-specDiffKern r s t_s = do
-  basis <- perferredBasis (r-1) s t_s
-  diffsBasis <- mapM ((spectralDifferentialExp (r-1)).gensToST) basis
+specDiffKern r s t_s =  do
+  basis <- perferredBasis r s t_s
+  diffsBasis <- mapM ((spectralDifferentialExp r).gensToST) basis
   let (cycs,ncycs) = partition (\(b,db) -> db == 0) $ zip basis diffsBasis
   if 1 >= length ncycs then return $ map (gensToST.fst) cycs else error "cannot, at this time, compute kernel due to laziness of programmer"
 
       
 specTermToE2PageConst :: SpectralTerm -> SSMTState E2PageConst
-specTermToE2PageConst (ST _ (Dots x)) = return x
+specTermToE2PageConst (ST _ (Dots x)) =  return x
 specTermToE2PageConst x
-  | isSum x  = fmap sum $ mapM specTermToE2PageConst $ getChildren x
+  | isSum  x  =  fmap sum $ mapM specTermToE2PageConst $ getChildren x
+  | otherwise = fail ""
 
 projectToPage :: Int -> SpectralTerm -> SSMTState E2PageConst
-projectToPage 2 x = specTermToE2PageConst x
-projectToPage r x = do
+projectToPage 2 x =  specTermToE2PageConst x
+projectToPage r x =  do
   x' <- specTermToE2PageConst x
   let (s,t_s) = stBiDeg x
   -- technically no need to go to r-1, but no harm either in next line, might want to make this better
-  quotDenoms <-  mapM (\r' -> perferredBasis r' (s+1) (t_s-r') >>= (mapM ((spectralDifferentialExp r').gensToST))) [2..r-1] 
+  quotDenoms <-  mapM (\r' -> perferredBasis r' (s-r') (t_s+1) >>= (mapM ((spectralDifferentialExp r').gensToST))) [2..min (r-1) s] 
   return $  toQuotient (nub $ filter (/=0) $ concat quotDenoms) x'
   
 -- definately wants a perferred basis element
 spectralDifferential :: Int -> SpectralTerm -> SSMTState SpectralTerm
-spectralDifferential r tm = do
+spectralDifferential r tm = trace ("Spectral Differential of " ++ (show(r,tm))) $  do
   mp <- fmap sssDiffMap get
   tm' <- specTermToE2PageConst tm
   case Map.lookup (r,tm') mp of
     (Just result) -> return result
     Nothing -> do
-      let (s,t_s) = stBiDeg tm
-      cbat <- perferredBasis r (s-1) (t_s+r) 
-      let result = sum $ map (\ctm -> diffCoef tm' ctm) cbat  
+      let (s,t_s) = trace "Attempting to create fake diff" $ stBiDeg tm
+      cbat <- perferredBasis r (s+r) (t_s-1) 
+      let result = trace ("perf basis of target " ++ (show (s,t_s)) ++ " is " ++ (show cbat)) $ sum $ map (\ctm -> diffCoef r tm' ctm) cbat  
       modify $ \old -> old{sssDiffMap = Map.insert (r,tm') result mp}
       return result
       
@@ -135,40 +144,58 @@ spectralDifferentialExp :: Int -> SpectralTerm -> SSMTState E2PageConst
 spectralDifferentialExp r tm = (spectralDifferential r tm) >>= specTermToE2PageConst
                                
 
+------------------ grab solved things, declare them solved ---------
+detectSolved :: SpectralLogic -> SSMTState SpectralLogic
+detectSolved andnode
+  | isAnd andnode = do
+    (ts,solved) <- MaybeT $ return $ acSplit (\t -> (isBitVar t) || ((isNot t) && (all isBitVar $ getChildren t))) andnode
+    knowns <- fmap sssKnownBitVars get
+    let (trs,fls) = partition isNot $ solved
+    modify $ \state -> state{sssKnownBitVars =  Map.unions $ 
+                                                [knowns,Map.fromList $ map (flip (,) LTrue) $ map getTag trs,
+                                                 Map.fromList $ map (flip (,) LFalse) $ map getTag fls]}
+    return ts
+
+
 
 -------------------rules using this --------------
 
 doDifferential :: Rule SpectralTerm
-doDifferential (ST _ (Differential r dot@(ST _ (Dots d)))) = runMaybeT $ do
-  let (s,t_s) = stBiDeg dot
+doDifferential (ST _ (Differential r dot@(ST _ (Dots d)))) = trace ("doing differential " ++ (show dot)) $ runMaybeT $ do
+  let dot' =  dot
+  let (s,t_s) = stBiDeg dot'
   perfBasis <- perferredBasis r s t_s
-  fmap sum $ mapM ((spectralDifferential r).gensToST) $ filter (/=0) $ decomposeBasis d perfBasis
+  result <- fmap sum $ mapM ((spectralDifferential r).gensToST) $ filter (/=0) $ decomposeBasis d perfBasis
+  return $  result
 doDifferential _ = return Nothing
 
 
 doProjection :: Rule SpectralTerm 
-doProjection (ST _ (Projection r dot@(ST _ (Dots d)))) = do
-  
+doProjection (ST _ (Projection r dot)) = do
+  result <- runMaybeT $ fmap gensToST $ projectToPage r dot
+  return $ result
+doProjection _ = return Nothing
+
 
 substituteBit :: Rule SpectralLogic
 substituteBit (SL _ (BitVar b)) = do
   mp <- fmap sssKnownBitVars get
   return $ Map.lookup b mp 
-
-
+substituteBit _ = return Nothing
 
 
 ------------------the actual solver----------------------
 
-leibnizRule :: Int -> SpectralTerm -> SpectralTerm -> SpectralLogic
-leibnizRule i a b = (slNot $ stDefined a) ||| (slNot $ stDefined b) ||| (slNot $ stDefined $ a*b)
-  ||| ((diff i $ a * b) === ((diff i a)*b + a*(diff i b)))
+leibnizRule :: Int -> SpectralTerm -> SpectralTerm  -> SpectralLogic
+leibnizRule i a b = (slNot $ stDefined i a) ||| (slNot $ stDefined i b) 
+  ||| ((diff i $ proj i $ a * b) === ((diff i $ proj i a)*b + a*(diff i $ proj i b)))
 
 leibnizRuleGen :: Int -> E2Gen -> E2Gen -> SpectralLogic
-leibnizRuleGen i g h = leibnizRule i (proj i $ genToST g) (proj i $ genToST h)
+leibnizRuleGen i g h = leibnizRule i (genToST g) (genToST h)
 
 
 -- want to say that h1 is a permanant cycle
+specialDiffs (ST v (Differential _ (ST _ (Dots d)))) = maybeIf (d==(toFModule $ E2Gen 1 1 0)) 0
 specialDiffs (ST v (Differential _ (ST _ (Projection _ (ST _ (Dots d)))))) = maybeIf (d==(toFModule $ E2Gen 1 1 0)) 0
 specialDiffs _ = Nothing
 
@@ -178,12 +205,59 @@ startingTerm dta@(ASSData d _ _) = let ld = largestDegree d in
          ld -1> (grating g) + (grating h), i <- [2..ld-(grating g)-(grating h)]]
 
 
-{-
---doit = fmap (\d -> normalize [basicLogicRule d] ([specialDiffs, basicTermRule d]) $ startingTerm d) $ fmap makeASSData $ loadE2Page 20
+simplifyLogic term = (fmap sssASSData get) >>= 
+                \dta -> normalize  [substituteBit, basicLogicRule dta] [preRuleToRule specialDiffs, basicTermRule dta, doDifferential, doProjection]
+                        $ unNormalizeLogic term
+simplifyTerm term = (fmap sssASSData get) >>= 
+                \dta -> normalize [preRuleToRule specialDiffs, basicTermRule dta, doDifferential,doProjection] [substituteBit, basicLogicRule dta]
+                        $ unNormalizeTerm term
 
---normIt x = fmap (\d -> normalize [basicLogicRule d] ([specialDiffs, basicTermRule d]) $ x) $ fmap makeASSData $ loadE2Page 1
---normItT x = fmap (\d -> normalize ([specialDiffs, basicTermRule d]) [basicLogicRule d] $ x) $ fmap makeASSData $ loadE2Page 10
+recognizeSolvedTerms term = runMaybeT $ detectSolved term
+
+updateState = do
+  diffMap <- fmap sssDiffMap get 
+  diffMap' <- fmap Map.fromList $ mapM (\(k,val) -> fmap ((,) k) (simplifyTerm val)) $ Map.toList diffMap
+  modify $ \g -> g{sssDiffMap = diffMap', sssPerfBasis = Map.filter isJust $ sssPerfBasis g}
+  
+  tagMap <- fmap sssKnownBitVars get 
+  tagMap' <- fmap Map.fromList $ mapM (\(k,val) -> fmap ((,) k) (simplifyLogic val)) $ Map.toList tagMap
+  modify $ \g -> g{sssDiffMap = diffMap'}
+  
+linearSolving :: SpectralLogic -> SSState (Maybe SpectralLogic)
+linearSolving term = runMaybeT $ do
+  (newterm,addsMap) <- MaybeT $ return $ linearReduceTerm term
+  modify $ \g -> g{sssKnownBitVars = Map.union addsMap (sssKnownBitVars g)}
+  return newterm
+
+runASSSolver :: SpectralLogic -> SSState SpectralLogic
+runASSSolver term = do
+  term' <-  simplifyLogic term
+  return term'
+  {-
+  termsolve <-  recognizeSolvedTerms term'
+  case termsolve of
+    (Just result) -> runASSSolver result
+    Nothing -> do
+      linearSolve <- fmap (trace "linearsolved") $ updateState >> linearSolving term'
+      case linearSolve of
+        (Just result) -> updateState >> runASSSolver result
+        Nothing -> return term'
 -}
 
+startingState dta = SSSD {sssASSData = dta,
+                          sssDiffMap = Map.empty,
+                          sssPerfBasis = Map.empty,
+                          sssKnownBitVars = Map.empty}
 
 
+adamsSpectralSequenceSolve :: ASSData -> (SpectralLogic,SSStateData)
+adamsSpectralSequenceSolve dta = runState (runASSSolver (startingTerm dta))$ 
+                                 SSSD {sssASSData = dta,
+                                       sssDiffMap = Map.empty,
+                                       sssPerfBasis = Map.empty,
+                                       sssKnownBitVars = Map.empty}
+
+problemTerm = eqZero (diff 2 $ proj 2 $ genToST $ E2Gen 2 8 0) 
+solveProblem = fmap (\dta -> evalState (simplifyLogic problemTerm) $ startingState $ makeASSData dta) (loadE2Page 15)
+
+doit = fmap (fst.adamsSpectralSequenceSolve.makeASSData) (loadE2Page 18) 
