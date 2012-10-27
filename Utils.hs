@@ -55,6 +55,11 @@ isPowerOf n k
   | divisible k n  = isPowerOf (n `div` k) k 
   | otherwise      = False
 
+componantOf :: Integer -> Integer -> Integer
+componantOf n k 
+  | divisible n k = n * (componantOf n (k`div`n))
+  | otherwise     = 1
+
 divisible k n = 0 == n `mod` k 
 
 average lst = (fromInteger $ sum lst) / (fromIntegral $ length lst)
@@ -99,6 +104,16 @@ splitSubstr str ls = sst [] ls
 
 zipMap f ls = zip ls $ map f ls
 
+mapHaltM pred f [] = return $ Left []
+mapHaltM pred f (a:as) = do
+  fa <- f a
+  case pred $ fa of
+    (Just a) -> return $ Right a
+    Nothing -> do
+      frst <- mapHaltM pred f as
+      case frst of 
+        (Left fas) -> return $ Left $ fa:fas
+        res -> return $ res
 
 maybeIf pred thn = if pred then Just thn else Nothing
 

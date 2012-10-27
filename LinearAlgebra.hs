@@ -36,6 +36,7 @@ recompose :: (IArray Array x,IArray UArray r,Num r, Eq r, Ord x) => Basis x -> V
 recompose domain v = fromAList $ map (\(i,r) -> (domain!i,r)) $ assocs v
 
 vlistToMatrix ::  (IArray UArray x) => [Vector x] -> Matrix x
+vlistToMatrix [] = error "vlistToMatrix on empty"
 vlistToMatrix lst = array ((0,a),(length lst-1,b)) 
                     $ concat $ zipWith  (\i ar -> [((i,j), ar ! j) | j <- [a..b]]) [0..length lst -1] lst
   where (a,b) = bounds $ head lst

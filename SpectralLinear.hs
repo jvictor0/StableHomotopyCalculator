@@ -13,6 +13,8 @@ import Data.Array.Unboxed
 import ZMod2
 import Data.Maybe
 import Z2MatrixOps
+import Debug.Trace
+
 
 identifyLinearTerms :: SpectralLogic -> Maybe (SpectralLogic,[(Bool,[SpectralLogic])])
 identifyLinearTerms andNote@(SL _ (And st)) = do
@@ -20,8 +22,8 @@ identifyLinearTerms andNote@(SL _ (And st)) = do
   return (t',map doLT lins)
   where isLT x = (isXOr x) || ((isNot x) && (all isXOr $ getChildren x))
         doLT x
-          | isNot x = (False,getChildren $ head $ getChildren x)
-          | isXOr x = (True,getChildren x)
+          | isNot x = (False,getChildren $ (\x -> trace (show x) $ head x) $ getChildren x) -- a + b + c + 1 = 1
+          | isXOr x = (True,getChildren x)          -- a + b + c = 1
 identifyLinearTerms _ = Nothing                      
 
 enumerateTerms :: [SpectralLogic] -> Map.Map SpectralLogic Int
@@ -42,9 +44,9 @@ linearReduceTerm tm = do
                                          [b..d])
              rrefmatrices
       (hasbv,nohasbv) = partition (\(_,xortms) -> any isBitVar xortms) $ xors
-      ts' = acInserts (map (\(b,xortms) -> (if b then id else slNot) $ slXOr xortms) nohasbv) ts
+      ts' = acInserts (map (\(b,xortms) -> (if b then id else slNot) $ slXOr xortms) nohasbv) ts 
       bitvarmap = Map.fromList $ map (\(b,xortms) -> let (bvhead,xortms') = removeOne isBitVar xortms 
-                                                     in (getTag bvhead,(if b then id else slNot) $ slXOr xortms')) hasbv
+                                                     in (getTag bvhead,(if b then slNot else id) $ slXOr xortms')) hasbv
   return (ts',bitvarmap)
                                                         
 linearIntEqsToMatrices :: [(Bool, Set.Set Int)] -> [(Set.Set Int,UArray (Int,Int) ZMod2)]

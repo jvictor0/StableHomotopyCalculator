@@ -18,6 +18,9 @@ import Data.List
 
 type E2PageConst = FreeModule E2Gen ZMod2
 
+e2PCGrating 0 = error "grating of 0" 
+e2PCGrating g = grating $ fst $ head $ toAList g
+
 data YonedaData = YD (Map.Map E2Gen (Map.Map E2Gen Z2FreeSteenrodVS)) deriving (Ord,Show,Eq)
 
 e2GenToChainMap :: Array Int [SteenrodAlgebra] -> E2GenData -> E2Gen -> Map.Map E2Gen (Z2FreeSteenrodVS)
@@ -41,6 +44,9 @@ genMult (ASSData dta (YD mp) _) g1 g2 = if s <= (largestDegree dta) && t_s +1 < 
         (Just h2) = Map.lookup g2 mp
         s = grating g1 + grating g2
         t_s = degree g1 + degree g2
+
+gensMult :: ASSData -> E2PageConst -> E2PageConst -> Maybe E2PageConst
+gensMult dta x y = fmap sum $ mapM (uncurry $ genMult dta) [(a,b) | (a,1) <- toAList x, (b,1) <- toAList y]
 
 yd = (loadE2Page 20) >>= (\it -> return $ makeYonedaData (admisArray 20) it)
 
@@ -101,3 +107,5 @@ data ASSData = ASSData E2GenData YonedaData HtpyOpData deriving (Eq,Show)
 
 makeASSData dta = ASSData dta (makeYonedaData scb dta) (makeHtpyOpData scb dta)
   where scb = admisArray $ largestDegree dta
+        
+gensAt (ASSData dta _ _) (s,t_s) = map fst $ Map.toList $ (gensDiffMap dta)!(s,t_s)

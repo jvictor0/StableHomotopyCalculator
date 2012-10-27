@@ -10,8 +10,11 @@ import Utils
 import E2Gen
 import qualified Data.Set as Set
 import Module
+import Debug.Trace
 
-data SpectralTerm = ST STAux STData | STZero deriving (Eq,Ord)
+
+
+data SpectralTerm = ST STAux STData | STZero  deriving (Eq,Ord)
 data STAux = STA {staFilt :: Int, staDeg :: Int, staNorm :: Bool} deriving (Show, Eq, Ord)
 data STData = Plus (MS.MultiSet SpectralTerm) |
               Times (MS.MultiSet SpectralTerm) |
@@ -191,7 +194,7 @@ isZero STZero = True
 isZero (ST _ (Dots 0)) = True
 isZero _ = False
 isOne (ST _ (Dots d)) = (d == toFModule unit)
-isOne v =  ((isProj v) && (isOne $ head $ getChildren v))
+isOne v =  ((isProj v) && (isOne $ (\x -> trace (show x) $ head x) $ getChildren v))
 
 
 isAnd (SL _ (And _)) = True
@@ -212,16 +215,18 @@ isBitVar (SL _ (BitVar _)) = True
 isBitVar _ = False
 
 getTag (SL _ (BitVar x)) = x
+getTag x = error $ "wtf: " ++ (show x)
 getDots (ST _ (Dots x)) = x
 
 linearTerm (ST _ (WithCoef _ a@(ST _ (Dots _)))) = Just a
 linearTerm a@(ST _ (Dots _)) = Just a
 linearTerm _ = Nothing
 
+
 diffCoef r src trg = ST (biDegToAux (a,b)) 
                    (WithCoef (SL slauxDefault (BitVar (DiffCoef r trg src)))
                     (gensToST trg))
-  where (E2Gen a b c) = fst $ head $ toAList trg
+  where (E2Gen a b c) = fst $ (\x -> trace (show x) $ head x) $ toAList trg
         
 
 instance Module SpectralTerm SpectralLogic where
@@ -265,7 +270,7 @@ proj i t = ST (biDegToAux (s,t_s)) $ Projection i t
 genToST g@(E2Gen a b c) = ST (biDegToAux (a,b)) $ Dots $ toFModule g
 gensToST 0 = STZero
 gensToST gs = ST (biDegToAux (a,b)) $ Dots gs
-  where (E2Gen a b c) = fst $ head $ toAList gs
+  where (E2Gen a b c) = fst $ (\x -> trace (show x) $ head x) $ toAList gs
 
 (===) :: SpectralTerm -> SpectralTerm -> SpectralLogic
 a === b = SL slauxDefault (EqualZero (a - b))

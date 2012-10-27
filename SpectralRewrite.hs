@@ -43,11 +43,11 @@ associate pred s = do
   (s',insts) <- acSplit pred s
   return $ acInserts (concatMap getChildren insts) s'
 
-distribute :: (Recursive r) => (r -> Bool) -> (r -> r -> r) -> PreRule r
+distribute :: (Show r,Recursive r) => (r -> Bool) -> (r -> r -> r) -> PreRule r
 distribute pred prod s = do
   (s',dists) <- acSplit pred s
   let s'' = acInserts (tail dists) s'
-      sm = head dists
+      sm =   head dists
   return $ acMap (prod s'') sm
 
 -- should prolly do a real search
@@ -102,13 +102,40 @@ coefOverDot (ST v (Dots gs))
 coefOverDot x = [x]
 
 linearEqualZero (SL _ (EqualZero (ST _ (WithCoef x y)))) = Just $ (slNot x) ||| (eqZero y)
-linearEqualZero (SL _ (EqualZero (ST _ (Plus ps)))) = do
-  tms <- mapM (\t -> linearTerm t >>= (return.(flip (,) t))) $ concatMap coefOverDot $ MS.toList ps
-  let gtms = groupBy ((==) `on` fst) $ sortBy (compare `on` fst) tms
-  return $ slAnd $ map (slNot . slXOr . (map (\(a,c) -> case c of
-                                                 (ST _ (WithCoef co _)) -> co
-                                                 (ST _ (Dots _)) -> LFalse))) gtms
+linearEqualZero (SL _ (EqualZero x@(ST _ (Plus ps)))) = do
+  gtms <- linearExpand x
+  return $ slAnd $ map (slNot.snd) gtms
 linearEqualZero _ = Nothing
+
+linearExpand term = do
+  let ps = if isSum term then getChildren term else [term]
+  tms <- mapM (\t -> linearTerm t >>= (return.(flip (,) t))) $ concatMap coefOverDot $ ps
+  let gtms = groupBy ((==) `on` fst) $ sortBy (compare `on` fst) tms
+  return $ map (\ls ->  (fst $ fromFModule  $ getDots $ fst $  head ls , slXOr $ 
+                                        (map (\(a,c) -> case c of
+                                                 (ST _ (WithCoef co _)) -> co
+                                                 (ST _ (Dots _)) -> LTrue)
+                                         ls)))
+    gtms
+
+
+slQuotientSingle :: [(E2Gen,SpectralLogic)] -> E2Gen -> [(E2Gen,SpectralLogic)]
+slQuotientSingle [] g = [(g,1)]
+slQuotientSingle ls@((tm,co):rst) g = result
+  where rstq =  slQuotientSingle rst g
+        result = if tm == g 
+                 then (map (\(a,ko) -> (a,co*ko)) rst) ++ [(g,slNot co)] 
+                 else [(g,co)] ++ (map (\(h,so) -> (h,so*(slNot co))) rstq)
+slQuotientGen :: SpectralTerm -> SpectralTerm -> Maybe SpectralTerm
+slQuotientGen denom num = do
+  les <- linearExpand num
+  denoms <- fmap (sortBy (flip $ compare `on` fst)) $ linearExpand denom
+  let tm = concatMap (\(g,co) -> map (\(a,ko) ->  (a,co*ko)) $ slQuotientSingle denoms g) les
+  return $ sum $ map (\(a,co) -> co*>(genToST a)) tm
+slQuotient :: [SpectralTerm] -> SpectralTerm -> Maybe SpectralTerm
+slQuotient [] tm = Just tm
+slQuotient (d:ds) tm = (slQuotientGen d tm) >>= (\tm' -> (mapM (slQuotientGen d) ds) >>= (\ds' -> slQuotient ds' tm'))
+
 
 dotsZero (ST _ (Dots 0)) = Just STZero
 dotsZero _ = Nothing
@@ -142,6 +169,9 @@ mod2FoldMS ms = maybeIf (any (>1) $ map snd $ MS.toAscOccurList ms)
 mod2Fold (Plus ms) = fmap Plus $ mod2FoldMS ms
 mod2FoldXor (XOr ms) = fmap XOr $ mod2FoldMS ms
 
+projectTo2 (ST _ (Projection 2 x)) = Just x
+projectTo2 _ = Nothing
+
 
 easyDefined0 (SL _ (Tag Defined z)) = maybeIf (isZero z) 1
 easyDefined0 _ = Nothing
@@ -167,25 +197,31 @@ prodCoefFold tms = do
   return $ ands *> prds
   
 
-basicTermPreRule dta y = (compactPreRules $ (easyZero dta):rsl) y
+basicTermPreRule dta y = (compactPreRules $ rsl) y
   where rsl :: [PreRule SpectralTerm]
         rsl = case y of
           (ST v (Plus _)) -> [associate isSum, idempote isZero,emptyNode STZero, opPushUp sum isDiff, opPushUp sum isProj, plusConstFold, singleNode,upgradePreRule mod2Fold]
-          (ST v (Times _)) -> [nilpote isZero STZero,associate isProd, idempote isOne, singleNode, emptyNode 1, prodCoefFold,
+          (ST v (Times _)) -> [associate isProd, idempote isOne, singleNode, emptyNode 1, prodCoefFold,
                                distribute isSum (*), opPushUp product isProj, prodConstFold dta]
           (ST v (Differential i x)) -> [nilpote isZero STZero]
-          (ST v (Projection i x)) -> [nilpote isZero (STZero)]
+          (ST v (Projection i x)) -> [projectTo2, nilpote isZero (STZero)]
           (ST v (SteenrodOp i x)) -> [opPushDown sum isSum,  nilpote isZero (STZero)]
           (ST v (WithCoef i x)) -> [easyCoef]
           (ST v (Dots _)) -> [dotsZero]
 
 basicLogicPreRule dta y = (compactPreRules rsl) y
   where rsl = case y of
-          (SL v (And _)) -> [nilpote isFalse 0, associate isAnd, idempote isTrue, emptyNode 1, singleNode]
-          (SL v (Or _)) -> [nilpote isTrue 1,associate isOr, idempote isFalse, emptyNode 0, singleNode]
+          (SL v (And _)) -> [associate isAnd, idempote isTrue, emptyNode 1, singleNode]
+          (SL v (Or _)) -> [associate isOr, idempote isFalse, emptyNode 0, singleNode]
           (SL v (Not _)) -> [opPushDown slOr isAnd, opPushDown slAnd isOr, easyNot]
           (SL v (EqualZero _)) -> [equalsZero, linearEqualZero]
           (SL v (XOr _)) -> [associate isXOr, idempote isFalse, emptyNode 0, singleNode, xorNotRemove,upgradePreRule mod2FoldXor]
           (SL v (Tag Defined _)) -> [easyDefined0,expandDefinedProj]
           (SL v _) -> []
 
+termHalt (ST _ (Times _)) 0 = Just 0
+termHalt _ _ = Nothing
+
+logicHalt (SL _ (And _)) 0 = Just 0
+logicHalt (SL _ (Or _)) 1 = Just 1
+logicHalt _ _ = Nothing
